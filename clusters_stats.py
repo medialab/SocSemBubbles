@@ -17,7 +17,7 @@ def get_partitions_from_communities(communities_dict):
             partitions_dict[node] = community_id
     return partitions_dict
 
-def community_sameness(first_set, second_set):
+def jaccard_index(first_set, second_set):
     return len(first_set & second_set)/len(first_set | second_set)
 
 def get_core_communities_from_two(first_communities, second_communities):
@@ -30,7 +30,7 @@ def get_core_communities_from_two(first_communities, second_communities):
         for key_second, set_second in second_communities.items():
             if set_second.issubset(set_first):
                 map_first_to_second[key_first].add(key_second)
-            alignment = community_sameness(set_first, set_second)
+            alignment = jaccard_index(set_first, set_second)
             if alignment > max_alignment_value:
                 max_alignment_value = alignment
                 max_alignment_key = key_second
