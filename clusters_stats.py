@@ -54,8 +54,8 @@ def get_communities_diversity(communities1, communities2, one_to_two_nodes_edges
     return communities_links
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON]')
+    if len(sys.argv) < 4:
+        sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
     with open(sys.argv[1], 'r') as f:
         binocular_datastructure = json.load(f)
 
@@ -117,3 +117,11 @@ if __name__ == "__main__":
                 socio_semantic_counts[c_count] += 1
         print(semantic_socio_counts)
         print(socio_semantic_counts)
+
+        #print(concepts_graph.node['ERGMs'])
+        #print(type(original_concept_communities))
+        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
+#        print(concepts_graph.node['ERGMs'])
+        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(original_actor_communities))
+        nx.write_gexf(concepts_graph, sys.argv[2])
+        nx.write_gexf(actors_graph, sys.argv[3])
