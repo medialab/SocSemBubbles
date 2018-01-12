@@ -3,6 +3,7 @@ import networkx as nx
 import community
 
 def get_communities_from_partitions(partition_dict):
+    """Format convertion: from cluster number keyed by node to node set keyed by cluster number."""
     communities_dict = {}
     for node, partition_number in partition_dict.items():
         if partition_number not in communities_dict:
@@ -11,6 +12,7 @@ def get_communities_from_partitions(partition_dict):
     return communities_dict
 
 def get_partitions_from_communities(communities_dict):
+    """Format convertion: from node set keyed by cluster number to cluster number keyed by node."""
     partitions_dict = {}
     for community_id, node_set in communities_dict.items():
         for node in node_set:
@@ -21,6 +23,9 @@ def jaccard_index(first_set, second_set):
     return len(first_set & second_set)/len(first_set | second_set)
 
 def get_core_communities_from_two(first_communities, second_communities):
+    """Get core communities from two community sets (on the same graph).
+    Smallest comunities are kept: clusters including others split.
+    """
     core_communities = {}
     map_first_to_second = {}
     core_key = 0
@@ -56,7 +61,10 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
-def get_communities_diversity(communities1, communities2, one_to_two_nodes_edges_dict):
+def get_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
+    """Basic metric: count how many target communities are linked to a source community,
+    for each source community.
+    """
     communities_links = {}
     partition2 = get_partitions_from_communities(communities2)
     for community, node_set in communities1.items():
