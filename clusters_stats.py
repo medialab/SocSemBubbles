@@ -21,25 +21,39 @@ def jaccard_index(first_set, second_set):
     return len(first_set & second_set)/len(first_set | second_set)
 
 def get_core_communities_from_two(first_communities, second_communities):
+    core_communities = {}
     map_first_to_second = {}
-    # Align communities by sameness metric
+    core_key = 0
+
+    # Strategy:
+    # Align communities by sameness metric (currently Jaccard Index) if there is no inclusion so far.
+    # If we detect community inclusion, we keep the smallest communities,
+    # consequently larger clusters are splitted.
     for key_first, set_first in first_communities.items():
         max_alignment_value = 0
         max_alignment_key = -1
-        map_first_to_second[key_first] = set()
+
         for key_second, set_second in second_communities.items():
+
             if set_second.issubset(set_first):
-                map_first_to_second[key_first].add(key_second)
-            alignment = jaccard_index(set_first, set_second)
-            if alignment > max_alignment_value:
-                max_alignment_value = alignment
-                max_alignment_key = key_second
-        map_first_to_second[key_first].add(max_alignment_key)
-    core_communities = {}
-    for key_first, key_second_set in map_first_to_second.items():
-        core_communities[key_first] = set()
-        for key_second in key_second_set:
-            core_communities[key_first] |= first_communities[key_first] & second_communities[key_second]
+                # First cluster is larger than second: eviction of the subset
+                set_first -= set_second
+                # ... and keep smallest cluster at the end
+                core_communities[core_key] = set_second
+                core_key += 1
+            else:
+                alignment = jaccard_index(set_first, set_second)
+                if alignment > max_alignment_value:
+                    max_alignment_value = alignment
+                    max_alignment_key = key_second
+
+        if max_alignment_value > 0 :
+            map_first_to_second[key_first] = max_alignment_key
+
+    for key_first, key_second in map_first_to_second.items():
+         core_communities[core_key] = first_communities[key_first] & second_communities[key_second]
+         core_key += 1
+
     return core_communities
 
 def get_communities_diversity(communities1, communities2, one_to_two_nodes_edges_dict):
@@ -118,10 +132,10 @@ if __name__ == "__main__":
         print(semantic_socio_counts)
         print(socio_semantic_counts)
 
-        #print(concepts_graph.node['ERGMs'])
-        #print(type(original_concept_communities))
+
         nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
-#        print(concepts_graph.node['ERGMs'])
+        #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
         nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(original_actor_communities))
+        #nx.set_node_attributes(actors_graph, name='python_class', values=original_actor_partition)
         nx.write_gexf(concepts_graph, sys.argv[2])
         nx.write_gexf(actors_graph, sys.argv[3])
