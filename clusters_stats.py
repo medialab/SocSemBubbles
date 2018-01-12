@@ -39,13 +39,13 @@ def get_core_communities_from_two(first_communities, second_communities):
         max_alignment_key = -1
 
         for key_second, set_second in second_communities.items():
-
             if set_second.issubset(set_first):
                 # First cluster is larger than second: eviction of the subset
                 set_first -= set_second
                 # ... and keep smallest cluster at the end
                 core_communities[core_key] = set_second
                 core_key += 1
+
             else:
                 alignment = jaccard_index(set_first, set_second)
                 if alignment > max_alignment_value:
@@ -66,13 +66,13 @@ def get_communities_diversity(source_communities, target_communities, one_to_two
     for each source community.
     """
     communities_links = {}
-    partition2 = get_partitions_from_communities(communities2)
-    for community, node_set in communities1.items():
+    target_partition = get_partitions_from_communities(target_communities)
+    for community, node_set in source_communities.items():
         communities_links[community] = set()
         for node in node_set:
             for target_node in one_to_two_nodes_edges_dict[node]:
-                if target_node in partition2:
-                    communities_links[community].add(partition2[target_node])
+                if target_node in target_partition:
+                    communities_links[community].add(target_partition[target_node])
     return communities_links
 
 if __name__ == "__main__":
