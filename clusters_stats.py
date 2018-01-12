@@ -61,14 +61,14 @@ if __name__ == "__main__":
 
         # Draw the actors and concept graphs (used for Louvain community detection)
         concepts_graph = nx.Graph()
-        for concept, (frequency, _) in binocular_datastructure['concepts'].items():
-            concepts_graph.add_node(concept, freq=frequency)
+        for concept, item in binocular_datastructure['concepts'].items():
+            concepts_graph.add_node(concept, freq=item['frequency'])
             for target_concept, w in binocular_datastructure['cc'][concept].items():
                 concepts_graph.add_edge(concept, target_concept, weight=w)
 
         actors_graph = nx.Graph()
-        for actor, (frequency, _) in binocular_datastructure['actors'].items():
-            actors_graph.add_node(actor, freq=frequency)
+        for actor, item in binocular_datastructure['actors'].items():
+            actors_graph.add_node(actor, freq=item['frequency'])
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(actor, target_actor, weight=w)
 
