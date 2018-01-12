@@ -59,6 +59,7 @@ if __name__ == "__main__":
     with open(sys.argv[1], 'r') as f:
         binocular_datastructure = json.load(f)
 
+        # Draw the actors and concept graphs (used for Louvain community detection)
         concepts_graph = nx.Graph()
         for concept, (frequency, _) in binocular_datastructure['concepts'].items():
             concepts_graph.add_node(concept, freq=frequency)
@@ -71,6 +72,7 @@ if __name__ == "__main__":
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(actor, target_actor, weight=w)
 
+        # Initial seeds for community stabilisation
         original_concept_partition = community.best_partition(concepts_graph, randomize=True)
         original_concept_communities = get_communities_from_partitions(original_concept_partition)
 
@@ -80,15 +82,38 @@ if __name__ == "__main__":
         #ex1 = {0: {'innovation', 'multilevel networks', 'ERGMs', 'organizations'}, 1: {'scientific communities', 'complex networks', 'online communities', 'public sphere'}, 2: {'semantic networks', 'duality', 'text mining', 'networks dynamics', 'visualization', 'historical sociology', 'communication', 'social networks', 'topic models', 'networks', 'NLP'}, 3: {'multi-mode networks', 'communication networks', 'socio-semantic networks', 'culture', 'community', 'cities'}}
         #ex2 = {0: {'innovation', 'multilevel networks', 'ERGMs', 'organizations'}, 1: {'scientific communities', 'complex networks', 'online communities', 'NLP', 'public sphere'}, 2: {'semantic networks', 'duality', 'communication', 'historical sociology', 'social networks', 'topic models', 'culture'}, 3: {'networks dynamics', 'visualization', 'networks', 'text mining'}, 4: {'multi-mode networks', 'socio-semantic networks', 'cities', 'community', 'communication networks'}}
         #print(get_core_communities_from_two(ex1, ex2))
+
+        # Communities stabilisation
         for i in range(200):
             current_concept_communities = get_communities_from_partitions(community.best_partition(concepts_graph, randomize=True))
             original_concept_communities = get_core_communities_from_two(original_concept_communities, current_concept_communities)
 
             current_actor_communities = get_communities_from_partitions(community.best_partition(actors_graph, randomize=True))
             original_actor_communities = get_core_communities_from_two(original_actor_communities, current_actor_communities)
+
         print(original_concept_communities, len([concept for key, item in original_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
         print(original_actor_communities, len([actor for key, item in original_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
 
-        communities_links = get_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
-        print(communities_links)
-        
+        # Links between stabilised communities
+        semantic_to_socio_communities_links = get_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
+        socio_to_semantic_communities_links = get_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
+        print(semantic_to_socio_communities_links)
+        print(socio_to_semantic_communities_links)
+
+        semantic_socio_counts = {}
+        socio_semantic_counts = {}
+        for _, communities_set in semantic_to_socio_communities_links.items():
+            c_count = len(communities_set)
+            if c_count not in semantic_socio_counts:
+                semantic_socio_counts[c_count] = 1
+            else:
+                semantic_socio_counts[c_count] += 1
+
+        for _, communities_set in socio_to_semantic_communities_links.items():
+            c_count = len(communities_set)
+            if c_count not in socio_semantic_counts:
+                socio_semantic_counts[c_count] = 1
+            else:
+                socio_semantic_counts[c_count] += 1
+        print(semantic_socio_counts)
+        print(socio_semantic_counts)
