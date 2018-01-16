@@ -103,13 +103,13 @@ if __name__ == "__main__":
         for concept, item in binocular_datastructure['concepts'].items():
             concepts_graph.add_node(concept, freq=item['frequency'])
             for target_concept, w in binocular_datastructure['cc'][concept].items():
-                concepts_graph.add_edge(concept, target_concept, weight=w)
+                concepts_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
 
         actors_graph = nx.Graph()
         for actor, item in binocular_datastructure['actors'].items():
             actors_graph.add_node(actor, freq=item['frequency'])
             for target_actor, w in binocular_datastructure['aa'][actor].items():
-                actors_graph.add_edge(actor, target_actor, weight=w)
+                actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
         # Initial seeds for community stabilisation
         original_concept_partition = community.best_partition(concepts_graph, randomize=True)
@@ -157,7 +157,7 @@ if __name__ == "__main__":
         print(semantic_socio_counts)
         print(socio_semantic_counts)
 
-        print(get_per_node_references(original_actor_communities, original_concept_communities, binocular_datastructure['ac']))
+        print(get_per_node_weighted_references(original_actor_communities, original_concept_communities, binocular_datastructure['ac']))
 
         nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
