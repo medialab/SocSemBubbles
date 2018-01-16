@@ -61,7 +61,7 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
-def get_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
+def get_basic_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
     """Basic metric: count how many target communities are linked to a source community,
     for each source community.
     """
@@ -74,6 +74,22 @@ def get_communities_diversity(source_communities, target_communities, one_to_two
                 if target_node in target_partition:
                     communities_links[community].add(target_partition[target_node])
     return communities_links
+
+def get_per_node_weighted_references(source_communities, target_communities, one_to_two_nodes_edges_dict):
+    """Returns dict keyed by node conveying target community's clusters connection."""
+    nodes_links = {}
+    target_partition = get_partitions_from_communities(target_communities)
+    for community, node_set in source_communities.items():
+        for node in node_set:
+            node_targets = one_to_two_nodes_edges_dict[node]
+            nodes_links[node] = {'total':len(node_targets), 'dispatch':{}}
+            for target_node in node_targets:
+                if target_node in target_partition:# It's in a core !
+                    target_community = target_partition[target_node]
+                    if target_community not in nodes_links[node]['dispatch']:
+                        nodes_links[node]['dispatch'][target_community] = 0
+                    nodes_links[node]['dispatch'][target_community] += 1
+    return nodes_links
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
@@ -117,8 +133,8 @@ if __name__ == "__main__":
         print(original_actor_communities, len([actor for key, item in original_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
 
         # Links between stabilised communities
-        semantic_to_socio_communities_links = get_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
-        socio_to_semantic_communities_links = get_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
+        semantic_to_socio_communities_links = get_basic_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
+        socio_to_semantic_communities_links = get_basic_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
         print(semantic_to_socio_communities_links)
         print(socio_to_semantic_communities_links)
 
