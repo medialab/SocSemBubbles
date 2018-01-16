@@ -82,9 +82,10 @@ def get_per_node_weighted_references(source_communities, target_communities, one
     for community, node_set in source_communities.items():
         for node in node_set:
             node_targets = one_to_two_nodes_edges_dict[node]
-            nodes_links[node] = {'total':len(node_targets), 'dispatch':{}}
+            nodes_links[node] = {'total':0, 'dispatch':{}}
             for target_node in node_targets:
                 if target_node in target_partition:# It's in a core !
+                    nodes_links[node]['total'] += 1
                     target_community = target_partition[target_node]
                     if target_community not in nodes_links[node]['dispatch']:
                         nodes_links[node]['dispatch'][target_community] = 0
@@ -156,6 +157,7 @@ if __name__ == "__main__":
         print(semantic_socio_counts)
         print(socio_semantic_counts)
 
+        print(get_per_node_references(original_actor_communities, original_concept_communities, binocular_datastructure['ac']))
 
         nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
