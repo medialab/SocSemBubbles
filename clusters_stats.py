@@ -99,6 +99,9 @@ def get_nodes_distribution(source_communities, target_communities, one_to_two_no
     return nodes_links
 
 def null_model_probabilities(target_core_communities, total_target_nodes_count):
+    """Compute the null-model probabilities. Low-level, might change,
+    use another null-model hypothesis, disappear => don't use it.
+    """
     # Hypothesis: multinomial case
     not_in_cores_target_nodes_count = total_target_nodes_count
     probabilities = {}
@@ -110,6 +113,7 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     return probabilities
 
 def null_model_expected_value_for_node(node_distribution, target_core_communities, total_target_nodes_count):
+    """Returns the expected links distribution across clusters according to the null-model."""
     # Hypothesis: multinomial case
     expected_values = {}
     null_model_probabilities_dict = null_model_probabilities(target_core_communities, total_target_nodes_count)
@@ -118,6 +122,9 @@ def null_model_expected_value_for_node(node_distribution, target_core_communitie
     return expected_values
 
 def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, total_target_nodes_count):
+    """Compute the nodes fingerprint: for each node, take the links distribution
+    and divide it by the equivalent expected distribution under a null-model hypothesis.
+    """
     # Strategy:
     # For each node:
     # Take links count for each clusters and divide
