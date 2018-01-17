@@ -92,6 +92,19 @@ def get_per_node_weighted_references(source_communities, target_communities, one
                     nodes_links[node]['dispatch'][target_community] += 1
     return nodes_links
 
+def null_model_probabilities(target_core_communities, total_target_nodes_count):
+    not_in_cores_target_nodes_count = total_target_nodes_count
+    probabilities = {}
+    for community, node_set in target_core_communities.items():
+        community_size = len(node_set)
+        probabilities[community] = community_size / total_target_nodes_count
+        not_in_cores_target_nodes_count -= community_size
+    probabilities['other'] = not_in_cores_target_nodes_count / total_target_nodes_count
+    return probabilities
+
+#def null_model_expected_value(node_links, ):
+#    return
+
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
@@ -111,7 +124,8 @@ if __name__ == "__main__":
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
-        samples_number = 5
+        samples_number = 50
+        samples_repetition = 20
 
         # Samples list preallocation
 
@@ -133,7 +147,7 @@ if __name__ == "__main__":
             #print(get_core_communities_from_two(ex1, ex2))
 
             # Communities stabilisation
-            for j in range(200):
+            for j in range(samples_repetition):
                 current_concept_communities = get_communities_from_partitions(community.best_partition(concepts_graph, randomize=True))
                 original_concept_communities[i] = get_core_communities_from_two(original_concept_communities[i], current_concept_communities)
 
