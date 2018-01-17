@@ -75,21 +75,21 @@ def get_basic_communities_diversity(source_communities, target_communities, one_
                     communities_links[community].add(target_partition[target_node])
     return communities_links
 
-def get_per_node_weighted_references(source_communities, target_communities, one_to_two_nodes_edges_dict):
+def get_nodes_distribution(source_communities, target_communities, one_to_two_nodes_edges_dict):
     """Returns dict keyed by node conveying target community's clusters connection."""
     nodes_links = {}
     target_partition = get_partitions_from_communities(target_communities)
     for community, node_set in source_communities.items():
         for node in node_set:
             node_targets = one_to_two_nodes_edges_dict[node]
-            nodes_links[node] = {'total':0, 'dispatch':{}}
+            nodes_links[node] = {'total': len(node_targets), 'total_in_core':0, 'core_distribution':{}}
             for target_node in node_targets:
                 if target_node in target_partition:# It's in a core !
-                    nodes_links[node]['total'] += 1
+                    nodes_links[node]['total_in_core'] += 1
                     target_community = target_partition[target_node]
-                    if target_community not in nodes_links[node]['dispatch']:
-                        nodes_links[node]['dispatch'][target_community] = 0
-                    nodes_links[node]['dispatch'][target_community] += 1
+                    if target_community not in nodes_links[node]['core_distribution']:
+                        nodes_links[node]['core_distribution'][target_community] = 0
+                    nodes_links[node]['core_distribution'][target_community] += 1
     return nodes_links
 
 def null_model_probabilities(target_core_communities, total_target_nodes_count):
