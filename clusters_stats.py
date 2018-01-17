@@ -102,8 +102,24 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     probabilities['other'] = not_in_cores_target_nodes_count / total_target_nodes_count
     return probabilities
 
-#def null_model_expected_value(node_links, ):
-#    return
+def null_model_expected_value_for_node(node_distribution, null_model_probabilities_dict):
+    expected_values = {}
+    for community, community_probability in null_model_probabilities_dict.items():
+        expected_values[community] = node_distribution['total']*community_probability
+    #print(expected_values)
+    return expected_values
+
+def node_distribution_fingerprint(nodes_distribution, null_model_probabilities_dict):
+    nodes_fingerprint = {}
+    for node_key, node_dist_dict in nodes_distribution.items():
+        nodes_fingerprint[node_key] = {}
+
+        null_model_freq = null_model_expected_value_for_node(node_dist_dict, null_model_probabilities_dict)
+        print(null_model_freq)
+        for community_key, community_freq in node_dist_dict['core_distribution'].items():
+            nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
+
+    return nodes_fingerprint
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
@@ -175,34 +191,40 @@ if __name__ == "__main__":
         print(original_actor_communities, len([actor for key, item in original_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
 
         # Links between stabilised communities
-        semantic_to_socio_communities_links = get_basic_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
-        socio_to_semantic_communities_links = get_basic_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
-        print(semantic_to_socio_communities_links)
-        print(socio_to_semantic_communities_links)
+#        semantic_to_socio_communities_links = get_basic_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
+#        socio_to_semantic_communities_links = get_basic_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
+#        print(semantic_to_socio_communities_links)
+#        print(socio_to_semantic_communities_links)
 
-        semantic_socio_counts = {}
-        socio_semantic_counts = {}
-        for _, communities_set in semantic_to_socio_communities_links.items():
-            c_count = len(communities_set)
-            if c_count not in semantic_socio_counts:
-                semantic_socio_counts[c_count] = 1
-            else:
-                semantic_socio_counts[c_count] += 1
+#        semantic_socio_counts = {}
+#        socio_semantic_counts = {}
+#        for _, communities_set in semantic_to_socio_communities_links.items():
+#            c_count = len(communities_set)
+#            if c_count not in semantic_socio_counts:
+#                semantic_socio_counts[c_count] = 1
+#            else:
+#                semantic_socio_counts[c_count] += 1
 
-        for _, communities_set in socio_to_semantic_communities_links.items():
-            c_count = len(communities_set)
-            if c_count not in socio_semantic_counts:
-                socio_semantic_counts[c_count] = 1
-            else:
-                socio_semantic_counts[c_count] += 1
-        print(semantic_socio_counts)
-        print(socio_semantic_counts)
+#        for _, communities_set in socio_to_semantic_communities_links.items():
+#            c_count = len(communities_set)
+#            if c_count not in socio_semantic_counts:
+#                socio_semantic_counts[c_count] = 1
+#            else:
+#                socio_semantic_counts[c_count] += 1
+#        print(semantic_socio_counts)
+#        print(socio_semantic_counts)
 
-        print(get_per_node_weighted_references(original_actor_communities, original_concept_communities, binocular_datastructure['ac']))
+        null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
+        print(null_model_prob)
 
-        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
+        nodes_dispatch = get_nodes_distribution(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
+        print(nodes_dispatch)
+        #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
+        print(node_distribution_fingerprint(nodes_dispatch, null_model_prob))
+
+#        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
-        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(original_actor_communities))
+#        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(original_actor_communities))
         #nx.set_node_attributes(actors_graph, name='python_class', values=original_actor_partition)
-        nx.write_gexf(concepts_graph, sys.argv[2])
-        nx.write_gexf(actors_graph, sys.argv[3])
+#        nx.write_gexf(concepts_graph, sys.argv[2])
+#        nx.write_gexf(actors_graph, sys.argv[3])
