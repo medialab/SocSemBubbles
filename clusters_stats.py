@@ -102,20 +102,21 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     probabilities['other'] = not_in_cores_target_nodes_count / total_target_nodes_count
     return probabilities
 
-def null_model_expected_value_for_node(node_distribution, null_model_probabilities_dict):
+def null_model_expected_value_for_node(node_distribution, target_core_communities, total_target_nodes_count):
     expected_values = {}
+    null_model_probabilities_dict = null_model_probabilities(target_core_communities, total_target_nodes_count)
     for community, community_probability in null_model_probabilities_dict.items():
         expected_values[community] = node_distribution['total']*community_probability
     #print(expected_values)
     return expected_values
 
-def node_distribution_fingerprint(nodes_distribution, null_model_probabilities_dict):
+def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, total_target_nodes_count):
     nodes_fingerprint = {}
     for node_key, node_dist_dict in nodes_distribution.items():
         nodes_fingerprint[node_key] = {}
 
-        null_model_freq = null_model_expected_value_for_node(node_dist_dict, null_model_probabilities_dict)
-        print(null_model_freq)
+        null_model_freq = null_model_expected_value_for_node(node_dist_dict, target_core_communities, total_target_nodes_count)
+        #print(null_model_freq)
         for community_key, community_freq in node_dist_dict['core_distribution'].items():
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
@@ -214,13 +215,13 @@ if __name__ == "__main__":
 #        print(semantic_socio_counts)
 #        print(socio_semantic_counts)
 
-        null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
-        print(null_model_prob)
+        #null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
+        #print(null_model_prob)
 
         nodes_dispatch = get_nodes_distribution(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
         print(nodes_dispatch)
         #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
-        print(node_distribution_fingerprint(nodes_dispatch, null_model_prob))
+        print(nodes_distribution_fingerprint(nodes_dispatch, original_concept_communities, len(binocular_datastructure['concepts'])))
 
 #        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
