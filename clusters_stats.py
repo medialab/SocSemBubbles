@@ -2,6 +2,8 @@ import json, sys
 import networkx as nx
 import community
 
+### Format conversion ###
+
 def get_communities_from_partitions(partition_dict):
     """Format convertion: from cluster number keyed by node to node set keyed by cluster number."""
     communities_dict = {}
@@ -18,6 +20,8 @@ def get_partitions_from_communities(communities_dict):
         for node in node_set:
             partitions_dict[node] = community_id
     return partitions_dict
+
+### Core Communities ###
 
 def jaccard_index(first_set, second_set):
     return len(first_set & second_set)/len(first_set | second_set)
@@ -61,6 +65,8 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
+### Communities diversity ###
+
 def get_basic_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
     """Basic metric: count how many target communities are linked to a source community,
     for each source community.
@@ -93,6 +99,7 @@ def get_nodes_distribution(source_communities, target_communities, one_to_two_no
     return nodes_links
 
 def null_model_probabilities(target_core_communities, total_target_nodes_count):
+    # Hypothesis: multinomial case
     not_in_cores_target_nodes_count = total_target_nodes_count
     probabilities = {}
     for community, node_set in target_core_communities.items():
@@ -103,20 +110,23 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     return probabilities
 
 def null_model_expected_value_for_node(node_distribution, target_core_communities, total_target_nodes_count):
+    # Hypothesis: multinomial case
     expected_values = {}
     null_model_probabilities_dict = null_model_probabilities(target_core_communities, total_target_nodes_count)
     for community, community_probability in null_model_probabilities_dict.items():
         expected_values[community] = node_distribution['total']*community_probability
-    #print(expected_values)
     return expected_values
 
 def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, total_target_nodes_count):
+    # Strategy:
+    # For each node:
+    # Take links count for each clusters and divide
+    # by the probabilistic null-model expected values of links count for the given cluster
     nodes_fingerprint = {}
     for node_key, node_dist_dict in nodes_distribution.items():
         nodes_fingerprint[node_key] = {}
 
         null_model_freq = null_model_expected_value_for_node(node_dist_dict, target_core_communities, total_target_nodes_count)
-        #print(null_model_freq)
         for community_key, community_freq in node_dist_dict['core_distribution'].items():
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
