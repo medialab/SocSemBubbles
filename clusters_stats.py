@@ -113,17 +113,21 @@ def generate_new_configuration():
 def compute_simulated_annealing(bootstraps_communities, pass):
     old_configuration = generate_new_configuration()
     old_score = get_configuration_score(bootstraps_communities, old_configuration)
-    temperature = 1
+    T = 1
     keep_going = True
-    while keep_going:
+    kept_configurations = [{'config': old_configuration, 'score': old_score}]
+    while keep_going and T > 0:
         keep_going = False
         current_configuration = generate_new_configuration()
         current_score = get_configuration_score(bootstraps_communities, current_configuration)
         score_diff = current_score - old_score
         if score_diff > 0 or random.random() < exp(score_diff/T):
-            old_configuration = current_configuration
+            kept_configurations.append({'config': current_configuration, 'score': current_score})
+            #old_configuration = current_configuration
+            old_score = current_score
             keep_going = True
-        
+        T = 0.99*T
+    return max(kept_configurations)
 
 ### Communities diversity ###
 
