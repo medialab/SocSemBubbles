@@ -1,6 +1,10 @@
 import json, sys
 import networkx as nx
 import community
+from operator import itemgetter
+from math import ceil
+from math import exp
+import random
 
 ### Format conversion ###
 
@@ -65,6 +69,62 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
+### (not exactly an) Implementation attempt of Rosvall M, Bergstrom CT (2010) Mapping Change in Large Networks. PLoS ONE 5(1): e8694. doi:10.1371/journal.pone.0008694 ###
+
+def get_best_bootstrap_community_and_candidate_alignment(bootstrap_communities, candidate_subset):
+    max_alignment = 0
+    best_community_key = None
+    for community_key, community_set in bootstrap_communities.items():
+        current_alignment = len(community_set & candidate_subset)
+        if current_alignment > max_alignment:
+            max_alignment = current_alignment
+            best_community_key = community_key
+    return best_community_key
+
+def get_configuration_penalty(bootstraps_communities, candidate_subset):
+    penalty = 0
+    mismatch_nodes = {}
+    # Get all the nodes mismatch
+    for bootstrap_key, bootstrap_communities in bootstraps_communities.items():
+        current_bootstrap_key = get_best_bootstrap_community_and_candidate_alignment(bootstrap_communities, candidate_subset)
+        for current_mismatched_node in bootstrap_communities[current_bootstrap_key] - candidate_subset:
+            if current_mismatched_node not in mismatch_nodes:
+                mismatch_nodes[current_mismatched_node] = {'count': 0, 'key': current_mismatched_node}
+            mismatch_nodes[current_mismatched_node]['count'] += 1
+    # Suppress higher 5%
+    sorted_list = sorted(list(mismatch_nodes.values()), itemgetter('count'), reverse=True)
+    sorted_list_size = len(sorted_list)
+    start_index = ceil(sorted_list_size*5/100)
+    #for index in range(start_index, len(sorted_list)):
+    penalty = sorted_list_size - start_index
+    return penalty
+
+def get_configuration_score(bootstraps_communities, candidate_subset):
+    mismatch_penalty = get_configuration_penalty(bootstraps_communities, candidate_subset)
+    configuration_score = len(candidate_subset) - 10*mismatch_penalty
+    return configuration_score
+
+def generate_new_configuration():
+    pass
+
+
+### Simulated Annealing ###
+
+def compute_simulated_annealing(bootstraps_communities, pass):
+    old_configuration = generate_new_configuration()
+    old_score = get_configuration_score(bootstraps_communities, old_configuration)
+    temperature = 1
+    keep_going = True
+    while keep_going:
+        keep_going = False
+        current_configuration = generate_new_configuration()
+        current_score = get_configuration_score(bootstraps_communities, current_configuration)
+        score_diff = current_score - old_score
+        if score_diff > 0 or random.random() < exp(score_diff/T):
+            old_configuration = current_configuration
+            keep_going = True
+        
+
 ### Communities diversity ###
 
 def get_basic_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
@@ -97,6 +157,8 @@ def get_nodes_distribution(source_communities, target_communities, one_to_two_no
                         nodes_links[node]['core_distribution'][target_community] = 0
                     nodes_links[node]['core_distribution'][target_community] += 1
     return nodes_links
+
+### Null-Model ###
 
 def null_model_probabilities(target_core_communities, total_target_nodes_count):
     """Compute the null-model probabilities. Low-level, might change,
@@ -142,6 +204,7 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
+    random.seed()
     with open(sys.argv[1], 'r') as f:
         binocular_datastructure = json.load(f)
 
