@@ -71,6 +71,10 @@ def get_core_communities_from_two(first_communities, second_communities):
     return core_communities
 
 def fuse_core_communities(bootstraps_list):
+    """Fuse bootstraps core communities by taking smaller clusters, aligning
+    them and taking 95% intersection (aka: the intersection across all bootstraps
+    + nodes present in 95% of bootstraps' took clusters).
+    """
     something_clustered = True
     cluster_stack = []
     while something_clustered:
