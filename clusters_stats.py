@@ -113,14 +113,12 @@ def fuse_core_communities(bootstraps_list):
                                 max_alignment_key = community_key
 
                     current_bootstrap_alignment.append(max_alignment_key) # keep in mind that it can be -1
-                    print('MAX', max_alignment_key)
-        print(current_bootstrap_alignment)
+
         # We have a plausible community alignment, now start to make the 95% merge
         ## Intersection
         tmp_intersection_set = current_community_anchor_set.copy()
         for b_index, c_index in enumerate(current_bootstrap_alignment):
             if c_index != -1:
-                print(b_index, c_index, bootstraps_list[b_index])
                 tmp_intersection_set &= bootstraps_list[b_index][c_index]
                 something_clustered = True
 
@@ -149,7 +147,8 @@ def fuse_core_communities(bootstraps_list):
             if c_index != -1:
                 del bootstraps_list[b_index][c_index]
 
-        cluster_stack.append(final_community)
+        if something_clustered:
+            cluster_stack.append(final_community)
     fused_core_communities = {key: community for key, community in enumerate(cluster_stack)}
     return fused_core_communities
 
@@ -310,8 +309,8 @@ if __name__ == "__main__":
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
-        samples_number = 50
-        samples_repetition = 20
+        samples_number = 1000
+        samples_repetition = 0
 
         # Samples list preallocation
 
