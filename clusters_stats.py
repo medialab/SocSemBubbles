@@ -5,6 +5,7 @@ from operator import itemgetter
 from math import ceil
 from math import floor
 from math import exp
+from math import sqrt
 import random
 
 ### Format conversion ###
@@ -275,6 +276,8 @@ def null_model_expected_value_for_node(node_distribution, target_core_communitie
         expected_values[community] = node_distribution['total']*community_probability
     return expected_values
 
+### Fingerprint ###
+
 def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, total_target_nodes_count):
     """Compute the nodes fingerprint: for each node, take the links distribution
     and divide it by the equivalent expected distribution under a null-model hypothesis.
@@ -292,6 +295,29 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
     return nodes_fingerprint
+
+def geometric_median(l):
+    # Naive implementation, because we do not (yet) need something clever
+    tmp = sorted(l)
+    size = len(tmp)
+    if size % 2 == 1:
+        return tmp[floor(size/2)]
+    else:
+        return sqrt(tmp[size//2-1]*tmp[size//2])
+
+def communities_distribution_median(nodes_fingerprint, source_communities):
+    communities_median_distribution = {}
+    for community_id, nodes_list in source_communities.items():
+        communities_median_distribution[community_id] = {}
+        for node in nodes_list:
+            for target_community_key, target_community_value in nodes_fingerprint[node].items():
+                if target_community_key not in communities_median_distribution[community_id]:
+                    communities_median_distribution[community_id][target_community_key] = [target_community_value]
+                else:
+                    communities_median_distribution[community_id][target_community_key].append(target_community_value)
+        for target_community_key in communities_median_distribution[community_id].keys():
+            communities_median_distribution[community_id][target_community_key] = geometric_median(communities_median_distribution[community_id][target_community_key])
+    return communities_median_distribution
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
