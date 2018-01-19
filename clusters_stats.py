@@ -3,6 +3,7 @@ import networkx as nx
 import community
 from operator import itemgetter
 from math import ceil
+from math import floor
 from math import exp
 import random
 
@@ -69,6 +70,89 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
+def fuse_core_communities(bootstraps_list):
+    something_clustered = True
+    cluster_stack = []
+    while something_clustered:
+        something_clustered = False
+
+        smaller_community_anchor = False
+        bootstrap_index = 0
+        while bootstrap_index < len(bootstraps_list) and bootstraps_list[bootstrap_index] == {}:
+            bootstrap_index += 1
+        if bootstrap_index == len(bootstraps_list):
+            continue
+        within_boostrap_community_index = list(bootstraps_list[bootstrap_index].keys())[0]
+        #bootstrap_aligned_community_indexes_sets = []
+        current_community_anchor_set = None
+        current_bootstrap_alignment = None
+
+        while not smaller_community_anchor:
+            smaller_community_anchor = True
+            current_bootstrap_alignment = []
+            current_community_anchor_set = bootstraps_list[bootstrap_index][within_boostrap_community_index]
+            for b_index, bootstrap in enumerate(bootstraps_list):
+                if b_index == bootstrap_index:
+                    current_bootstrap_alignment.append(within_boostrap_community_index)
+
+                elif smaller_community_anchor: # Don't get through all the bootstraps if a smaller community is found
+                    max_alignment_value = 0
+                    max_alignment_key = -1
+                    for community_key, community_set in bootstrap.items():
+                        #print(community_set)
+                        #print(current_community_anchor_set)
+                        if community_set.issubset(current_community_anchor_set) and community_set != current_community_anchor_set: # Redo it with the smaller one
+                            within_boostrap_community_index = community_key
+                            bootstrap_index = b_index
+                            smaller_community_anchor = False
+
+                        else:
+                            current_alignment = jaccard_index(current_community_anchor_set, community_set)
+                            if current_alignment > max_alignment_value:
+                                max_alignment_value = current_alignment
+                                max_alignment_key = community_key
+
+                    current_bootstrap_alignment.append(max_alignment_key) # keep in mind that it can be -1
+                    print('MAX', max_alignment_key)
+        print(current_bootstrap_alignment)
+        # We have a plausible community alignment, now start to make the 95% merge
+        ## Intersection
+        tmp_intersection_set = current_community_anchor_set.copy()
+        for b_index, c_index in enumerate(current_bootstrap_alignment):
+            if c_index != -1:
+                print(b_index, c_index, bootstraps_list[b_index])
+                tmp_intersection_set &= bootstraps_list[b_index][c_index]
+                something_clustered = True
+
+        ## Mismatch counting
+        mismatch_dict = {}
+        for b_index, c_index in enumerate(current_bootstrap_alignment):
+            if c_index != -1:
+                current_community = bootstraps_list[b_index][c_index]
+                for mismatched_node in current_community - tmp_intersection_set:
+                    if mismatched_node not in mismatch_dict:
+                        mismatch_dict[mismatched_node] = 1
+                    else:
+                        mismatch_dict[mismatched_node] += 1
+
+        ## Remerging highly mismatched (ie highly present in bootstraps, but not all) nodes
+        mismatch_list = [{'node': node_key, 'count': node_count} for node_key, node_count in mismatch_dict.items()]
+        remerged_threshold = floor(len(bootstraps_list)*95/100)
+        remerged_nodes = set()
+        for mismatch in sorted(mismatch_list, key=itemgetter('count'), reverse=True):
+            if mismatch['count'] > remerged_threshold:
+                remerged_nodes.add(mismatch['node'])
+        final_community = tmp_intersection_set | remerged_nodes
+
+        ## Evict used communities and reiterate
+        for b_index, c_index in enumerate(current_bootstrap_alignment):
+            if c_index != -1:
+                del bootstraps_list[b_index][c_index]
+
+        cluster_stack.append(final_community)
+    fused_core_communities = {key: community for key, community in enumerate(cluster_stack)}
+    return fused_core_communities
+
 ### (not exactly an) Implementation attempt of Rosvall M, Bergstrom CT (2010) Mapping Change in Large Networks. PLoS ONE 5(1): e8694. doi:10.1371/journal.pone.0008694 ###
 
 def get_best_bootstrap_community_and_candidate_alignment(bootstrap_communities, candidate_subset):
@@ -109,8 +193,9 @@ def generate_new_configuration():
 
 
 ### Simulated Annealing ###
+# Reference : Kirkpatrick S, C D Gelatt J, Vecchi MP (1983) Optimization by simulated annealing. Science 220: 671–680.
 
-def compute_simulated_annealing(bootstraps_communities, pass):
+def compute_simulated_annealing(bootstraps_communities):
     old_configuration = generate_new_configuration()
     old_score = get_configuration_score(bootstraps_communities, old_configuration)
     T = 1
@@ -263,17 +348,20 @@ if __name__ == "__main__":
         #print('orig2', original_concept_communities[0])
         #print('test', test_)
 
-        for i in range(samples_number-1, 0, -1):
-            for j in range(i):
+        #for i in range(samples_number-1, 0, -1):
+        #    for j in range(i):
                 #print(j, original_concept_communities[j])
-                original_concept_communities[j] = get_core_communities_from_two(original_concept_communities[j], original_concept_communities[j+1])
-                original_actor_communities[j] = get_core_communities_from_two(original_actor_communities[j], original_actor_communities[j+1])
+        #        original_concept_communities[j] = get_core_communities_from_two(original_concept_communities[j], original_concept_communities[j+1])
+        #        original_actor_communities[j] = get_core_communities_from_two(original_actor_communities[j], original_actor_communities[j+1])
 
-        original_concept_communities = original_concept_communities[0]
-        original_actor_communities = original_actor_communities[0]
+        #original_concept_communities = original_concept_communities[0]
+        #original_actor_communities = original_actor_communities[0]
 
-        print(original_concept_communities, len([concept for key, item in original_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
-        print(original_actor_communities, len([actor for key, item in original_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
+        final_concept_communities = fuse_core_communities(original_concept_communities)
+        final_actor_communities = fuse_core_communities(original_actor_communities)
+
+        print(final_concept_communities, len([concept for key, item in final_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
+        print(final_actor_communities, len([actor for key, item in final_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
 
         # Links between stabilised communities
 #        semantic_to_socio_communities_links = get_basic_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
@@ -302,14 +390,14 @@ if __name__ == "__main__":
         #null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
         #print(null_model_prob)
 
-        nodes_dispatch = get_nodes_distribution(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
+        nodes_dispatch = get_nodes_distribution(final_actor_communities, final_concept_communities, binocular_datastructure['ac'])
         print(nodes_dispatch)
         #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
-        print(nodes_distribution_fingerprint(nodes_dispatch, original_concept_communities, len(binocular_datastructure['concepts'])))
+        print(nodes_distribution_fingerprint(nodes_dispatch, final_concept_communities, len(binocular_datastructure['concepts'])))
 
-#        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(original_concept_communities))
+        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(final_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
-#        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(original_actor_communities))
+        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(final_actor_communities))
         #nx.set_node_attributes(actors_graph, name='python_class', values=original_actor_partition)
-#        nx.write_gexf(concepts_graph, sys.argv[2])
-#        nx.write_gexf(actors_graph, sys.argv[3])
+        nx.write_gexf(concepts_graph, sys.argv[2])
+        nx.write_gexf(actors_graph, sys.argv[3])
