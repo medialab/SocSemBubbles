@@ -267,13 +267,13 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     probabilities['other'] = not_in_cores_target_nodes_count / total_target_nodes_count
     return probabilities
 
-def null_model_expected_value_for_node(node_distribution, target_core_communities, total_target_nodes_count):
+def null_model_expected_value_for_node(total_node_links, target_core_communities, total_target_nodes_count):
     """Returns the expected links distribution across clusters according to the null-model."""
     # Hypothesis: multinomial case
     expected_values = {}
     null_model_probabilities_dict = null_model_probabilities(target_core_communities, total_target_nodes_count)
     for community, community_probability in null_model_probabilities_dict.items():
-        expected_values[community] = node_distribution['total']*community_probability
+        expected_values[community] = total_node_links*community_probability
     return expected_values
 
 ### Fingerprint ###
@@ -290,7 +290,7 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
     for node_key, node_dist_dict in nodes_distribution.items():
         nodes_fingerprint[node_key] = {}
 
-        null_model_freq = null_model_expected_value_for_node(node_dist_dict, target_core_communities, total_target_nodes_count)
+        null_model_freq = null_model_expected_value_for_node(node_dist_dict['total'], target_core_communities, total_target_nodes_count)
         for community_key, community_freq in node_dist_dict['core_distribution'].items():
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
@@ -305,7 +305,7 @@ def geometric_median(l):
     else:
         return sqrt(tmp[size//2-1]*tmp[size//2])
 
-def communities_distribution_median(nodes_fingerprint, source_communities):
+def communities_distribution_by_median(nodes_fingerprint, source_communities):
     communities_median_distribution = {}
     for community_id, nodes_list in source_communities.items():
         communities_median_distribution[community_id] = {}
