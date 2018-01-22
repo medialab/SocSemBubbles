@@ -71,6 +71,55 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     return core_communities
 
+def align_bootstraps(bootstraps_list, bootstrap_index):
+    """Return boostraps alignment (and their intersection set)."""
+    smaller_community_anchor = False
+
+    within_boostrap_community_index = list(bootstraps_list[bootstrap_index].keys())[0]
+    current_community_anchor_set = None
+    current_bootstrap_alignment = None
+
+    while not smaller_community_anchor:
+        smaller_community_anchor = True
+        current_bootstrap_alignment = []
+        current_community_anchor_set = bootstraps_list[bootstrap_index][within_boostrap_community_index]
+        for b_index, bootstrap in enumerate(bootstraps_list):
+            if b_index == bootstrap_index:
+                current_bootstrap_alignment.append(within_boostrap_community_index)
+
+            elif smaller_community_anchor: # Don't get through all the bootstraps if a smaller community is found
+                max_alignment_value = 0
+                max_alignment_key = -1
+                for community_key, community_set in bootstrap.items():
+                    #print(community_set)
+                    #print(current_community_anchor_set)
+                    if community_set.issubset(current_community_anchor_set) and community_set != current_community_anchor_set: # Redo it with the smaller one
+                        within_boostrap_community_index = community_key
+                        bootstrap_index = b_index
+                        smaller_community_anchor = False
+
+                    else:
+                        current_alignment = jaccard_index(current_community_anchor_set, community_set)
+                        if current_alignment > max_alignment_value:
+                            max_alignment_value = current_alignment
+                            max_alignment_key = community_key
+
+                current_bootstrap_alignment.append(max_alignment_key) # keep in mind that it can be -1
+    return (current_bootstrap_alignment, current_community_anchor_set)
+
+def get_mismatch_from_alignment(bootstraps_list, bootstrap_alignment, intersection_set):
+    """Return the mismatch nodes of a given node_set relatively to given alignment."""
+    mismatch_dict = {}
+    for b_index, c_index in enumerate(bootstrap_alignment):
+        if c_index != -1:
+            current_community = bootstraps_list[b_index][c_index]
+            for mismatched_node in current_community - intersection_set:
+                if mismatched_node not in mismatch_dict:
+                    mismatch_dict[mismatched_node] = 1
+                else:
+                    mismatch_dict[mismatched_node] += 1
+    return mismatch_dict
+
 def fuse_core_communities(bootstraps_list):
     """Fuse bootstraps core communities by taking smaller clusters, aligning
     them and taking 95% intersection (aka: the intersection across all bootstraps
@@ -81,46 +130,16 @@ def fuse_core_communities(bootstraps_list):
     while something_clustered:
         something_clustered = False
 
-        smaller_community_anchor = False
         bootstrap_index = 0
         while bootstrap_index < len(bootstraps_list) and bootstraps_list[bootstrap_index] == {}:
             bootstrap_index += 1
         if bootstrap_index == len(bootstraps_list):
             continue
-        within_boostrap_community_index = list(bootstraps_list[bootstrap_index].keys())[0]
-        #bootstrap_aligned_community_indexes_sets = []
-        current_community_anchor_set = None
-        current_bootstrap_alignment = None
 
-        while not smaller_community_anchor:
-            smaller_community_anchor = True
-            current_bootstrap_alignment = []
-            current_community_anchor_set = bootstraps_list[bootstrap_index][within_boostrap_community_index]
-            for b_index, bootstrap in enumerate(bootstraps_list):
-                if b_index == bootstrap_index:
-                    current_bootstrap_alignment.append(within_boostrap_community_index)
-
-                elif smaller_community_anchor: # Don't get through all the bootstraps if a smaller community is found
-                    max_alignment_value = 0
-                    max_alignment_key = -1
-                    for community_key, community_set in bootstrap.items():
-                        #print(community_set)
-                        #print(current_community_anchor_set)
-                        if community_set.issubset(current_community_anchor_set) and community_set != current_community_anchor_set: # Redo it with the smaller one
-                            within_boostrap_community_index = community_key
-                            bootstrap_index = b_index
-                            smaller_community_anchor = False
-
-                        else:
-                            current_alignment = jaccard_index(current_community_anchor_set, community_set)
-                            if current_alignment > max_alignment_value:
-                                max_alignment_value = current_alignment
-                                max_alignment_key = community_key
-
-                    current_bootstrap_alignment.append(max_alignment_key) # keep in mind that it can be -1
+        (current_bootstrap_alignment, current_community_anchor_set) = align_bootstraps(bootstraps_list, bootstrap_index)
 
         # We have a plausible community alignment, now start to make the 95% merge
-        ## Intersection
+        ## Intersection (by the way, check if we really aligned more than one bootstrap - aka we clustered something)
         tmp_intersection_set = current_community_anchor_set.copy()
         for b_index, c_index in enumerate(current_bootstrap_alignment):
             if c_index != -1:
@@ -128,15 +147,7 @@ def fuse_core_communities(bootstraps_list):
                 something_clustered = True
 
         ## Mismatch counting
-        mismatch_dict = {}
-        for b_index, c_index in enumerate(current_bootstrap_alignment):
-            if c_index != -1:
-                current_community = bootstraps_list[b_index][c_index]
-                for mismatched_node in current_community - tmp_intersection_set:
-                    if mismatched_node not in mismatch_dict:
-                        mismatch_dict[mismatched_node] = 1
-                    else:
-                        mismatch_dict[mismatched_node] += 1
+        mismatch_dict = get_mismatch_from_alignment(bootstraps_list, current_bootstrap_alignment, tmp_intersection_set)
 
         ## Remerging highly mismatched (ie highly present in bootstraps, but not all) nodes
         mismatch_list = [{'node': node_key, 'count': node_count} for node_key, node_count in mismatch_dict.items()]
