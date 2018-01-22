@@ -297,6 +297,9 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
     return nodes_fingerprint
 
 def geometric_median(l):
+    """Naive implementation of geometric median (aka median with geometric mean
+    interpolation in case of an even-numbered list size).
+    """
     # Naive implementation, because we do not (yet) need something clever
     tmp = sorted(l)
     size = len(tmp)
@@ -306,6 +309,9 @@ def geometric_median(l):
         return sqrt(tmp[size//2-1]*tmp[size//2])
 
 def communities_distribution_by_median(nodes_fingerprint, source_communities):
+    """Compute source communities fingerprint by taking its nodes' median for each
+    target community (the ones which are fingerprinted).
+    """
     communities_median_distribution = {}
     for community_id, nodes_list in source_communities.items():
         communities_median_distribution[community_id] = {}
@@ -320,6 +326,10 @@ def communities_distribution_by_median(nodes_fingerprint, source_communities):
     return communities_median_distribution
 
 def communities_distribution_by_overall_fingerprint(nodes_distribution, source_core_communities, target_core_communities, total_target_nodes_count):
+    """Compute each source communities fingerprint by grouping all its nodes' links into a virtual
+    node representing the overall source community, and computing the fingerprint of that
+    virtual node.
+    """
     communities_fingerprint = {}
     for community_key, nodes_set in source_core_communities.items():
         communities_fingerprint[community_key] = {'total': 0, 'total_in_core':0, 'core_distribution':{}}
