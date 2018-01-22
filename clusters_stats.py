@@ -307,9 +307,10 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
 
     return nodes_fingerprint
 
-def geometric_median(l):
-    """Naive implementation of geometric median (aka median with geometric mean
+def median_with_geometric_interpolation(l):
+    """Naive implementation of 'geometric' median (aka median with geometric mean
     interpolation in case of an even-numbered list size).
+    Different from the mathematical geometric median (which is basically multidimensionnal median).
     """
     # Naive implementation, because we do not (yet) need something clever
     tmp = sorted(l)
@@ -333,7 +334,7 @@ def communities_distribution_by_median(nodes_fingerprint, source_communities):
                 else:
                     communities_median_distribution[community_id][target_community_key].append(target_community_value)
         for target_community_key in communities_median_distribution[community_id].keys():
-            communities_median_distribution[community_id][target_community_key] = geometric_median(communities_median_distribution[community_id][target_community_key])
+            communities_median_distribution[community_id][target_community_key] = median_with_geometric_interpolation(communities_median_distribution[community_id][target_community_key])
     return communities_median_distribution
 
 def communities_distribution_by_overall_fingerprint(nodes_distribution, source_core_communities, target_core_communities, total_target_nodes_count):
