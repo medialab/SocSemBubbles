@@ -319,6 +319,22 @@ def communities_distribution_by_median(nodes_fingerprint, source_communities):
             communities_median_distribution[community_id][target_community_key] = geometric_median(communities_median_distribution[community_id][target_community_key])
     return communities_median_distribution
 
+def communities_distribution_by_overall_fingerprint(nodes_distribution, source_core_communities, target_core_communities, total_target_nodes_count):
+    communities_fingerprint = {}
+    for community_key, nodes_set in source_core_communities.items():
+        communities_fingerprint[community_key] = {'total': 0, 'total_in_core':0, 'core_distribution':{}}
+        for community_node in nodes_set:
+            communities_fingerprint[community_key]['total'] += nodes_distribution[community_node]['total']
+            communities_fingerprint[community_key]['total_in_core'] += nodes_distribution[community_node]['total_in_core']
+            for target_community_key, target_community_key_weight in nodes_distribution[community_node]['core_distribution'].items():
+                if target_community_key not in communities_fingerprint[community_key]['core_distribution']:
+                    communities_fingerprint[community_key]['core_distribution'][target_community_key] = target_community_key_weight
+                else:
+                    communities_fingerprint[community_key]['core_distribution'][target_community_key] += target_community_key_weight
+    #print(communities_fingerprint)
+    return nodes_distribution_fingerprint(communities_fingerprint, target_core_communities, total_target_nodes_count)
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
