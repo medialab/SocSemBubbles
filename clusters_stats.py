@@ -108,7 +108,7 @@ def align_bootstraps(bootstraps_list, bootstrap_index):
     return (current_bootstrap_alignment, current_community_anchor_set)
 
 def get_mismatch_from_alignment(bootstraps_list, bootstrap_alignment, intersection_set):
-    """Return the mismatch nodes of a given node_set relatively to given alignment."""
+    """Return the mismatch nodes of a given alignment relatively to given intersection set."""
     mismatch_dict = {}
     for b_index, c_index in enumerate(bootstrap_alignment):
         if c_index != -1:
