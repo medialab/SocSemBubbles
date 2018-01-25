@@ -59,15 +59,8 @@ var graph = raw.model();
             // CUSTOM
             var individuals_list = JSON.parse(t.values[0][individuals()[0]]);
             //console.log(individuals_list);
-            var in_community_count = 0;
-            var prev_community = "";
             for (var offset in individuals_list) {
-              if (t.values[0][steps()[0]] == prev_community)
-                ++in_community_count;
-              else
-                in_community_count = 0;
-              prev_community = t.values[0][steps()[0]];
-              var individual = { targeted_link : link, name : individuals_list[offset].name, present : individuals_list[offset].present, community_offset : in_community_count};
+              var individual = { targeted_link : link, name : individuals_list[offset].name, present : individuals_list[offset].present, community_offset : offset, total_individuals : individuals_list.length };
               ind.push(individual);
             }
           })
@@ -143,20 +136,24 @@ var graph = raw.model();
 	var colors = chart.color()
 		.title("Color scale")
 
-    var individualNodeHeight = chart.number()
+/*  var individualColors = chart.color()
+		.title("Individuals color scale")*/
+
+/*    var individualNodeHeight = chart.number()
         .title("Indidivual nodes height dividing factor")
-        .defaultValue(10)
+        .defaultValue(10)*/
 
-    var individualNodePadding = chart.number()
+/*    var individualNodePadding = chart.number()
         .title("Indidivual nodes padding factor")
-        .defaultValue(1)
+        .defaultValue(1)*/
 
-    var individualNodeOffset = chart.number()
+/*    var individualNodeOffset = chart.number()
         .title("Indidivual nodes padding offset from given flow top")
-        .defaultValue(1)
+        .defaultValue(1)*/
 
 	chart.draw(function (selection, data){
-	    console.log(data);
+
+   console.log(data);
 
 		var formatNumber = d3.format(",.0f"),
 		    format = function(d) { return formatNumber(d); };
@@ -240,6 +237,38 @@ var graph = raw.model();
 			})
 		})
 
+    // Making individuals values
+    var indivi_colors = {};
+    var filtered_individuals = [];
+    var nested_individuals = {};
+    var key = -1;
+
+    for (var ind_offset in individuals) {
+      d = individuals[ind_offset];
+
+      if (!(d.name in indivi_colors))
+        indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', 200, '+(255*d.community_offset/d.total_individuals)+")";
+
+      if (d.community_offset == 0) {
+        ++key;
+        nested_individuals[key] = [];
+      }
+
+      if (d.present)
+        nested_individuals[key].push(d)
+    }
+
+    for (var nested_offset in nested_individuals) {
+      d = nested_individuals[nested_offset];
+      var total = d.length;
+      for (var offset in d) {
+        d[offset].community_offset = offset;
+        d[offset].total_individuals = total;
+        filtered_individuals.push(d[offset]);
+      }
+    }
+
+    console.log(filtered_individuals);
 		/*individuals.sort(function(a,b){
 		  if (links.indexOf(a.targeted_link) < links.indexOf(b.targeted_link))
 		    return 1;
@@ -297,27 +326,16 @@ var graph = raw.model();
 
 
     var individual = g.append("g").selectAll(".individual")
-      .data(individuals)
+      .data(filtered_individuals)
       .enter().append("g")
         .attr("class", "individual")
         .attr("transform", function(d) { return "translate(" + d.targeted_link.source.x + "," + (d.targeted_link.source.y + d.targeted_link.sy) + ")"; });
 
    individual.append("rect")
-    .attr("height", function(d) { return d.targeted_link.dy/individualNodeHeight(); })
-    .attr("width", sankey.nodeWidth()+10)
-    .attr("y", function(d) { return (individualNodeOffset()+d.community_offset)*individualNodePadding()*(d.targeted_link.dy/individualNodeHeight()); })
-    .style("fill", function(d) { return d.present ? "#F6A" : "#666"; });
-// IT'S WORKING !!!
-        /*var bliblou = g.append("g").selectAll(".bliblou")
-            .data(links)
-            .enter().append("g")
-                .attr("class", "bliblou")
-                .attr("transform", function(d) { return "translate(" + (d.source.x) + "," + (d.source.y + d.source.dy/3) + ")"; });
-
-        bliblou.append("rect")
-            .attr("height", function(d) { return individualNodeWidth(); })// a mettre en ajustable
-            .attr("width", sankey.nodeWidth()+10)
-            .style("fill", function(d) { return "#F6A"; });*/
+    .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
+    .attr("width", sankey.nodeWidth())
+    .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
+    .style("fill", function(d) { return d.present ? indivi_colors[d.name] : "#666"; });
 	})
 
 })();
