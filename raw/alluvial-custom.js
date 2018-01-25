@@ -16,18 +16,18 @@ var graph = raw.model();
       .accessor(function (d){ return +d; })
 
     var individuals = graph.dimension('individuals')
-        .title('Individuals')
-        .multiple(false)
-        .required(1)
+        .title('Individuals (same order as steps)')
+        .multiple(true)
+        .required(2)
 
     graph.map(function (data){
       //console.log(individuals()[0]);
 
-      var d = { nodes: [], links: [], individuals: [] }
+      var d = { nodes: [], links: [], source_individuals: [], target_individuals: [] }
 
       if (!steps() || steps().length < 2) return d;
 
-      var n = [], l = [], ind = [], si, ti;
+      var n = [], l = [], src_ind = [], tgt_ind = [], si, ti;
 
       for (var i=0; i < steps().length-1; i++ ) {
 
@@ -56,12 +56,18 @@ var graph = raw.model();
             var value = size() ? d3.sum(t.values, function (d){ return +size(d); }) : t.values.length;
             var link = { source : n[si], target : n[ti], value : value };
             l.push(link);
+
             // CUSTOM
-            var individuals_list = JSON.parse(t.values[0][individuals()[0]]);
-            //console.log(individuals_list);
-            for (var offset in individuals_list) {
-              var individual = { targeted_link : link, name : individuals_list[offset].name, present : individuals_list[offset].present, community_offset : offset, total_individuals : individuals_list.length };
-              ind.push(individual);
+            var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
+            for (var offset in source_individuals_list) {
+              var individual = { targeted_link : link, name : source_individuals_list[offset].name, present : source_individuals_list[offset].present, community_offset : offset, total_individuals : source_individuals_list.length };
+              src_ind.push(individual);
+            }
+
+            var target_individuals_list = JSON.parse(t.values[0][individuals()[1]]);
+            for (var offset in target_individuals_list) {
+              var individual = { targeted_link : link, name : target_individuals_list[offset].name, present : target_individuals_list[offset].present, community_offset : offset, total_individuals : target_individuals_list.length };
+              tgt_ind.push(individual);
             }
           })
 
@@ -70,10 +76,11 @@ var graph = raw.model();
 
 
       d.nodes = n.sort(customSort);
-      l.forEach(function (d){ d.source = n.indexOf(d.source); d.target = n.indexOf(d.target)});
+      l.forEach(function (d){ d.source = n.indexOf(d.source); d.target = n.indexOf(d.target) });
       d.links = l;
       //ind.forEach(function (d){ d.targeted_link = l.indexOf(d.targeted_link); });
-      d.individuals = ind;
+      d.source_individuals = src_ind;
+      d.target_individuals = tgt_ind;
       return d;
 
     })
@@ -136,21 +143,6 @@ var graph = raw.model();
 	var colors = chart.color()
 		.title("Color scale")
 
-/*  var individualColors = chart.color()
-		.title("Individuals color scale")*/
-
-/*    var individualNodeHeight = chart.number()
-        .title("Indidivual nodes height dividing factor")
-        .defaultValue(10)*/
-
-/*    var individualNodePadding = chart.number()
-        .title("Indidivual nodes padding factor")
-        .defaultValue(1)*/
-
-/*    var individualNodeOffset = chart.number()
-        .title("Indidivual nodes padding offset from given flow top")
-        .defaultValue(1)*/
-
 	chart.draw(function (selection, data){
 
    console.log(data);
@@ -181,7 +173,8 @@ var graph = raw.model();
 		var path = sankey.link(),
 			nodes = data.nodes,
 			links = data.links,
-      individuals = data.individuals;
+      source_individuals = data.source_individuals,
+      target_individuals = data.target_individuals;
 
 		sankey
 	   		.nodes(nodes)
@@ -238,49 +231,69 @@ var graph = raw.model();
 		})
 
     // Making individuals values
-    var indivi_colors = {};
-    var filtered_individuals = [];
-    var nested_individuals = {};
-    var key = -1;
+    var src_indivi_colors = {};
+    var filtered_source_individuals = [];
+    var nested_source_individuals = {};
+    var src_key = -1;
 
-    for (var ind_offset in individuals) {
-      d = individuals[ind_offset];
+    for (var src_ind_offset in source_individuals) {
+      d = source_individuals[src_ind_offset];
 
-      if (!(d.name in indivi_colors))
-        indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', 200, '+(255*d.community_offset/d.total_individuals)+")";
+      if (!(d.name in src_indivi_colors))
+        src_indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
 
       if (d.community_offset == 0) {
-        ++key;
-        nested_individuals[key] = [];
+        ++src_key;
+        nested_source_individuals[src_key] = [];
       }
 
       if (d.present)
-        nested_individuals[key].push(d)
+        nested_source_individuals[src_key].push(d)
     }
 
-    for (var nested_offset in nested_individuals) {
-      d = nested_individuals[nested_offset];
+    for (var nested_source_offset in nested_source_individuals) {
+      d = nested_source_individuals[nested_source_offset];
       var total = d.length;
       for (var offset in d) {
         d[offset].community_offset = offset;
         d[offset].total_individuals = total;
-        filtered_individuals.push(d[offset]);
+        filtered_source_individuals.push(d[offset]);
       }
     }
 
-    console.log(filtered_individuals);
-		/*individuals.sort(function(a,b){
-		  if (links.indexOf(a.targeted_link) < links.indexOf(b.targeted_link))
-		    return 1;
-		  else if (links.indexOf(a.targeted_link) > links.indexOf(b.targeted_link))
-		    return -1;
-		  else if (a.name < b.name)
-		    return 1;
-		  else if (a.name > b.name)
-		    return -1;
-		  else
-		    return 0;
-		});*/
+    var tgt_indivi_colors = {};
+    var filtered_target_individuals = [];
+    var nested_target_individuals = {};
+    var tgt_key = -1;
+
+    for (var tgt_ind_offset in target_individuals) {
+      d = target_individuals[tgt_ind_offset];
+
+      if (!(d.name in src_indivi_colors))
+        tgt_indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
+
+      if (d.community_offset == 0) {
+        ++tgt_key;
+        nested_target_individuals[tgt_key] = [];
+      }
+
+      if (d.present)
+        nested_target_individuals[tgt_key].push(d)
+    }
+
+    for (var nested_target_offset in nested_target_individuals) {
+      d = nested_target_individuals[nested_target_offset];
+      var total = d.length;
+      for (var offset in d) {
+        d[offset].community_offset = offset;
+        d[offset].total_individuals = total;
+        filtered_target_individuals.push(d[offset]);
+      }
+    }
+
+
+//    console.log(filtered_source_individuals);
+//    console.log(filtered_target_individuals);
 // padding of 10 (px ??) between nodes => next node y coordinate is current_node.y+current_node.dy+10.
 	 	colors.domain(links, function (d){ return d.source.name; });
 
@@ -325,17 +338,30 @@ var graph = raw.model();
 		     	.attr("text-anchor", "start");
 
 
-    var individual = g.append("g").selectAll(".individual")
-      .data(filtered_individuals)
+    var src_individual = g.append("g").selectAll(".src_individual")
+      .data(filtered_source_individuals)
       .enter().append("g")
-        .attr("class", "individual")
+        .attr("class", "src_individual")
         .attr("transform", function(d) { return "translate(" + d.targeted_link.source.x + "," + (d.targeted_link.source.y + d.targeted_link.sy) + ")"; });
 
-   individual.append("rect")
-    .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
-    .attr("width", sankey.nodeWidth())
-    .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
-    .style("fill", function(d) { return d.present ? indivi_colors[d.name] : "#666"; });
+    src_individual.append("rect")
+      .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
+      .attr("width", sankey.nodeWidth())
+      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
+      .style("fill", function(d) { return d.present ? src_indivi_colors[d.name] : "#666"; });
+
+    var tgt_individual = g.append("g").selectAll(".tgt_individual")
+      .data(filtered_target_individuals)
+      .enter().append("g")
+        .attr("class", "tgt_individual")
+        .attr("transform", function(d) { return "translate(" + d.targeted_link.target.x + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")"; });
+
+    tgt_individual.append("rect")
+      .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
+      .attr("width", sankey.nodeWidth())
+      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
+      .style("fill", function(d) { return d.present ? tgt_indivi_colors[d.name] : "#666"; });
+
 	})
 
 })();
