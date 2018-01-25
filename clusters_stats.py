@@ -1,4 +1,4 @@
-import json, sys
+import json, sys, csv
 import networkx as nx
 import community
 from operator import itemgetter
@@ -67,6 +67,12 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     for key_first, key_second in map_first_to_second.items():
          core_communities[core_key] = first_communities[key_first] & second_communities[key_second]
+         #for evicted_node in first_communities[key_first] ^ second_communities[key_second]:
+         #   print(evicted_node, 'evicted because it belongs to', end=" ")
+         #   if evicted_node in first_communities[key_first]:
+         #      print('first community but not second')
+         #   else:
+         #       print('second community but not first')
          core_key += 1
 
     return core_communities
@@ -457,14 +463,95 @@ if __name__ == "__main__":
         #null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
         #print(null_model_prob)
 
-        nodes_dispatch = get_nodes_distribution(final_actor_communities, final_concept_communities, binocular_datastructure['ac'])
-        print(nodes_dispatch)
+        actor_nodes_dispatch = get_nodes_distribution(final_actor_communities, final_concept_communities, binocular_datastructure['ac'])
+        concept_nodes_dispatch = get_nodes_distribution(final_concept_communities, final_actor_communities, binocular_datastructure['ca'])
+        print(actor_nodes_dispatch)
         #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
-        print(nodes_distribution_fingerprint(nodes_dispatch, final_concept_communities, len(binocular_datastructure['concepts'])))
+        nodes_f = nodes_distribution_fingerprint(actor_nodes_dispatch, final_concept_communities, len(binocular_datastructure['concepts']))
+        print(nodes_f)
+        print()
+        print(communities_distribution_by_median(nodes_f, final_actor_communities))
+        actor_fingerprint = communities_distribution_by_overall_fingerprint(actor_nodes_dispatch, final_actor_communities, final_concept_communities, len(binocular_datastructure['concepts']))
+        concept_fingerprint = communities_distribution_by_overall_fingerprint(concept_nodes_dispatch, final_concept_communities, final_actor_communities, len(binocular_datastructure['actors']))
+        print(actor_fingerprint)
+        with open(sys.argv[2], 'w') as g, open(sys.argv[3], 'w') as h:
+            #concept_writer = csv.writer(g)
+            #actor_writer = csv.writer(h)
+            #actor_writer.writerow(['Implied_actors_source_nodes', 'Implied_concepts_target_nodes','Actor_community', 'Concept_target', 'Weight'])
+            #concept_writer.writerow(['Implied_concepts_source_nodes', 'Implied_actors_target_nodes','Concept_community', 'Actor_target', 'Weight'])
+            actor_dict = []
+            concept_dict = []
 
-        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(final_concept_communities))
+            for source_community, distribution in actor_fingerprint.items():
+                community_nodes = final_actor_communities[source_community]
+                for target_community, w in distribution.items():
+                    # UGLY
+                    considered_source_nodes = []
+                    considered_target_nodes = []
+                    target_full_nodes_set = set(final_concept_communities[target_community])
+                    target_reached_nodes_set = set()
+
+                    for community_node in community_nodes:
+                        considered_source_nodes.append({
+                        'name': community_node,
+                        'present': target_community in actor_nodes_dispatch[community_node]['core_distribution']
+                        })
+
+                        # Add to the actual reached nodes set the target communities nodes reached by current source node
+                        target_reached_nodes_set |= set(binocular_datastructure['ac'][community_node].keys()) & target_full_nodes_set
+
+                    for target_node in target_full_nodes_set:
+                        considered_target_nodes.append({
+                        'name': target_node,
+                        'present': target_node in target_reached_nodes_set
+                        })
+                        
+                    #actor_writer.writerow([json.dumps(considered_source_nodes), json.dumps(considered_target_nodes), source_community, target_community, w])
+                    actor_dict.append({
+                    'Implied_actors_source_nodes': json.dumps(considered_source_nodes),
+                    'Implied_concepts_target_nodes': json.dumps(considered_target_nodes),
+                    'Actor_community': source_community,
+                    'Concept_target': target_community,
+                    'Weight': w
+                    })
+            json.dump(actor_dict, h)
+
+            for source_community, distribution in concept_fingerprint.items():
+                community_nodes = final_concept_communities[source_community]
+                for target_community, w in distribution.items():
+                    # UGLY
+                    considered_source_nodes = []
+                    considered_target_nodes = []
+                    target_full_nodes_set = set(final_actor_communities[target_community])
+                    target_reached_nodes_set = set()
+
+                    for community_node in community_nodes:
+                        considered_source_nodes.append({
+                        'name': community_node,
+                        'present': target_community in concept_nodes_dispatch[community_node]['core_distribution']
+                        })
+
+                        # Add to the actual reached nodes set the target communities nodes reached by current source node
+                        target_reached_nodes_set |= set(binocular_datastructure['ca'][community_node].keys()) & target_full_nodes_set
+
+                    for target_node in target_full_nodes_set:
+                        considered_target_nodes.append({
+                        'name': target_node,
+                        'present': target_node in target_reached_nodes_set
+                        })
+
+                    #concept_writer.writerow([json.dumps(considered_source_nodes), json.dumps(considered_target_nodes), source_community, target_community, w])
+                    concept_dict.append({
+                    'Implied_concepts_source_nodes': json.dumps(considered_source_nodes),
+                    'Implied_actors_target_nodes': json.dumps(considered_target_nodes),
+                    'Concept_community': source_community,
+                    'Actor_target': target_community,
+                    'Weight': w
+                    })
+            json.dump(concept_dict, g)
+#        nx.set_node_attributes(concepts_graph, name='python_class', values=get_partitions_from_communities(final_concept_communities))
         #nx.set_node_attributes(concepts_graph, name='python_class', values=original_concept_partition)
-        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(final_actor_communities))
+#        nx.set_node_attributes(actors_graph, name='python_class', values=get_partitions_from_communities(final_actor_communities))
         #nx.set_node_attributes(actors_graph, name='python_class', values=original_actor_partition)
-        nx.write_gexf(concepts_graph, sys.argv[2])
-        nx.write_gexf(actors_graph, sys.argv[3])
+#        nx.write_gexf(concepts_graph, sys.argv[2])
+#        nx.write_gexf(actors_graph, sys.argv[3])
