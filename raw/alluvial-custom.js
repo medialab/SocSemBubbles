@@ -57,7 +57,7 @@ var graph = raw.model();
             var link = { source : n[si], target : n[ti], value : value };
             l.push(link);
 
-            // CUSTOM
+            // === CUSTOM ===
             var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
             for (var offset in source_individuals_list) {
               var individual = { targeted_link : link, name : source_individuals_list[offset].name, present : source_individuals_list[offset].present, community_offset : offset, total_individuals : source_individuals_list.length };
@@ -69,6 +69,7 @@ var graph = raw.model();
               var individual = { targeted_link : link, name : target_individuals_list[offset].name, present : target_individuals_list[offset].present, community_offset : offset, total_individuals : target_individuals_list.length };
               tgt_ind.push(individual);
             }
+            // =============
           })
 
         })
@@ -94,12 +95,6 @@ var graph = raw.model();
       else{
           return (a.name.localeCompare(b.name));
       }
-    }
-
-    function sortByGroup(a,b){
-      if(a.group < b.group) return -1;
-      if(a.group > b.group) return 1;
-      return 0;
     }
 
     function getNodeIndex(array, name, group) {
@@ -230,7 +225,7 @@ var graph = raw.model();
 			})
 		})
 
-    // Making individuals values
+    // === Making individuals values ===
     var src_indivi_colors = {};
     var filtered_source_individuals = [];
     var nested_source_individuals = {};
@@ -291,6 +286,7 @@ var graph = raw.model();
       }
     }
 
+    // ==================================
 
 //    console.log(filtered_source_individuals);
 //    console.log(filtered_target_individuals);
@@ -301,7 +297,7 @@ var graph = raw.model();
 	    	.data(links)
 	   		.enter().append("path")
 			    .attr("class", "link")
-			    .attr("d", path )
+			    .attr("d", path)
 			    .style("stroke-width", function(d) { return Math.max(1, d.dy); })
 			    .style("fill","none")
 			    .style("stroke", function (d){ return colors()(d.source.name); })
@@ -349,18 +345,25 @@ var graph = raw.model();
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
       .style("fill", function(d) { return d.present ? src_indivi_colors[d.name] : "#666"; });
-
+      
+      src_individual.append("text")
+      .text(function(d) { return d.name; });
+// TODO: display on hover ?
     var tgt_individual = g.append("g").selectAll(".tgt_individual")
       .data(filtered_target_individuals)
       .enter().append("g")
         .attr("class", "tgt_individual")
-        .attr("transform", function(d) { return "translate(" + d.targeted_link.target.x + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")"; });
+        .attr("transform", function(d) { return "translate(" + d.targeted_link.target.x + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")"; })
+        .style("hover text", function(d) {"display: block"});
 
     tgt_individual.append("rect")
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
       .style("fill", function(d) { return d.present ? tgt_indivi_colors[d.name] : "#666"; });
+
+      tgt_individual.append("text").text(function(d) { return d.name; })
+      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); });
 
 	})
 
