@@ -328,37 +328,9 @@ if __name__ == "__main__":
         print(final_concept_communities, len([concept for key, item in final_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
         print(final_actor_communities, len([actor for key, item in final_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
 
-        # Links between stabilised communities
-#        semantic_to_socio_communities_links = get_basic_communities_diversity(original_concept_communities, original_actor_communities, binocular_datastructure['ca'])
-#        socio_to_semantic_communities_links = get_basic_communities_diversity(original_actor_communities, original_concept_communities, binocular_datastructure['ac'])
-#        print(semantic_to_socio_communities_links)
-#        print(socio_to_semantic_communities_links)
-
-#        semantic_socio_counts = {}
-#        socio_semantic_counts = {}
-#        for _, communities_set in semantic_to_socio_communities_links.items():
-#            c_count = len(communities_set)
-#            if c_count not in semantic_socio_counts:
-#                semantic_socio_counts[c_count] = 1
-#            else:
-#                semantic_socio_counts[c_count] += 1
-
-#        for _, communities_set in socio_to_semantic_communities_links.items():
-#            c_count = len(communities_set)
-#            if c_count not in socio_semantic_counts:
-#                socio_semantic_counts[c_count] = 1
-#            else:
-#                socio_semantic_counts[c_count] += 1
-#        print(semantic_socio_counts)
-#        print(socio_semantic_counts)
-
-        #null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
-        #print(null_model_prob)
-
         actor_nodes_dispatch = get_nodes_distribution(binocular_datastructure['ac'], final_actor_communities, final_concept_communities)
         concept_nodes_dispatch = get_nodes_distribution(binocular_datastructure['ca'], final_concept_communities, final_actor_communities)
         print(actor_nodes_dispatch)
-        #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
         nodes_f = nodes_distribution_fingerprint(len(binocular_datastructure['concepts']), actor_nodes_dispatch, final_concept_communities)
         print(nodes_f)
         print()
