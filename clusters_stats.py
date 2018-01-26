@@ -120,7 +120,7 @@ def get_mismatch_from_alignment(bootstraps_list, bootstrap_alignment, intersecti
                     mismatch_dict[mismatched_node] += 1
     return mismatch_dict
 
-def fuse_core_communities(bootstraps_list):
+def fuse_core_communities(bootstraps_list, confidence_threshold):
     """Fuse bootstraps core communities by taking smaller clusters, aligning
     them and taking 95% intersection (aka: the intersection across all bootstraps
     + nodes present in 95% of bootstraps' took clusters).
@@ -151,7 +151,7 @@ def fuse_core_communities(bootstraps_list):
 
         ## Remerging highly mismatched (ie highly present in bootstraps, but not all) nodes
         mismatch_list = [{'node': node_key, 'count': node_count} for node_key, node_count in mismatch_dict.items()]
-        remerged_threshold = floor(len(bootstraps_list)*95/100)
+        remerged_threshold = floor(len(bootstraps_list)*confidence_threshold)
         remerged_nodes = set()
         for mismatch in sorted(mismatch_list, key=itemgetter('count'), reverse=True):
             if mismatch['count'] > remerged_threshold:
@@ -296,11 +296,12 @@ def communities_distribution_by_overall_fingerprint(total_target_nodes_count, no
     return nodes_distribution_fingerprint(total_target_nodes_count, communities_distribution, target_core_communities)
 
 
-def generate_core_communities(graph, samples_number):
+def generate_core_communities(graph, samples_number, confidence_threshold = 95/100):
+    """Generate core communities with given confidence threshold."""
     original_communities = [None]*samples_number
     for i in range(samples_number):
         original_communities[i] = get_communities_from_partitions(community.best_partition(graph, randomize=True))
-    return fuse_core_communities(original_communities)
+    return fuse_core_communities(original_communities, confidence_threshold)
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
@@ -322,8 +323,8 @@ if __name__ == "__main__":
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
-        final_concept_communities = generate_core_communities(concepts_graph, 1000)
-        final_actor_communities = generate_core_communities(actors_graph, 1000)
+        final_concept_communities = generate_core_communities(concepts_graph, 1000, 95/100)
+        final_actor_communities = generate_core_communities(actors_graph, 1000, 95/100)
 
         print(final_concept_communities, len([concept for key, item in final_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
         print(final_actor_communities, len([actor for key, item in final_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
