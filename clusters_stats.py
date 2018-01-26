@@ -296,6 +296,12 @@ def communities_distribution_by_overall_fingerprint(total_target_nodes_count, no
     return nodes_distribution_fingerprint(total_target_nodes_count, communities_distribution, target_core_communities)
 
 
+def generate_core_communities(graph, samples_number):
+    original_communities = [None]*samples_number
+    for i in range(samples_number):
+        original_communities[i] = get_communities_from_partitions(community.best_partition(graph, randomize=True))
+    return fuse_core_communities(original_communities)
+
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
@@ -316,55 +322,8 @@ if __name__ == "__main__":
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
-        samples_number = 1000
-        samples_repetition = 0
-
-        # Samples list preallocation
-
-        original_concept_partition = [None]*samples_number
-        original_concept_communities = [None]*samples_number
-        original_actor_partition = [None]*samples_number
-        original_actor_communities = [None]*samples_number
-
-        for i in range(samples_number):
-            # Initial seeds for community stabilisation
-            original_concept_partition[i] = community.best_partition(concepts_graph, randomize=True)
-            original_concept_communities[i] = get_communities_from_partitions(original_concept_partition[i])
-
-            original_actor_partition[i] = community.best_partition(actors_graph, randomize=True)
-            original_actor_communities[i] = get_communities_from_partitions(original_actor_partition[i])
-
-            #ex1 = {0: {'innovation', 'multilevel networks', 'ERGMs', 'organizations'}, 1: {'scientific communities', 'complex networks', 'online communities', 'public sphere'}, 2: {'semantic networks', 'duality', 'text mining', 'networks dynamics', 'visualization', 'historical sociology', 'communication', 'social networks', 'topic models', 'networks', 'NLP'}, 3: {'multi-mode networks', 'communication networks', 'socio-semantic networks', 'culture', 'community', 'cities'}}
-            #ex2 = {0: {'innovation', 'multilevel networks', 'ERGMs', 'organizations'}, 1: {'scientific communities', 'complex networks', 'online communities', 'NLP', 'public sphere'}, 2: {'semantic networks', 'duality', 'communication', 'historical sociology', 'social networks', 'topic models', 'culture'}, 3: {'networks dynamics', 'visualization', 'networks', 'text mining'}, 4: {'multi-mode networks', 'socio-semantic networks', 'cities', 'community', 'communication networks'}}
-            #print(get_core_communities_from_two(ex1, ex2))
-
-            # Communities stabilisation
-            for j in range(samples_repetition):
-                current_concept_communities = get_communities_from_partitions(community.best_partition(concepts_graph, randomize=True))
-                original_concept_communities[i] = get_core_communities_from_two(original_concept_communities[i], current_concept_communities)
-
-                current_actor_communities = get_communities_from_partitions(community.best_partition(actors_graph, randomize=True))
-                original_actor_communities[i] = get_core_communities_from_two(original_actor_communities[i], current_actor_communities)
-            #print(original_concept_communities[i])
-
-        # Samples fusion
-
-        #print('orig', original_concept_communities[0])
-        #test_ = get_core_communities_from_two(original_concept_communities[0], original_concept_communities[1])
-        #print('orig2', original_concept_communities[0])
-        #print('test', test_)
-
-        #for i in range(samples_number-1, 0, -1):
-        #    for j in range(i):
-                #print(j, original_concept_communities[j])
-        #        original_concept_communities[j] = get_core_communities_from_two(original_concept_communities[j], original_concept_communities[j+1])
-        #        original_actor_communities[j] = get_core_communities_from_two(original_actor_communities[j], original_actor_communities[j+1])
-
-        #original_concept_communities = original_concept_communities[0]
-        #original_actor_communities = original_actor_communities[0]
-
-        final_concept_communities = fuse_core_communities(original_concept_communities)
-        final_actor_communities = fuse_core_communities(original_actor_communities)
+        final_concept_communities = generate_core_communities(concepts_graph, 1000)
+        final_actor_communities = generate_core_communities(actors_graph, 1000)
 
         print(final_concept_communities, len([concept for key, item in final_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
         print(final_actor_communities, len([actor for key, item in final_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
