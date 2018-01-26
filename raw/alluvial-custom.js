@@ -299,6 +299,15 @@ var graph = raw.model();
       }
     }
 
+  //  Correct nodes x coordinate
+  for (var node_offset in nodes) {
+    d = nodes[node_offset];
+    if (d.x == 0)
+      d.x += 1*sankey.nodeWidth();
+    else
+      d.x -= 1*sankey.nodeWidth();
+  }
+
     // ==================================
 
 //    console.log(filtered_source_individuals);
@@ -351,7 +360,7 @@ var graph = raw.model();
       .data(filtered_source_individuals)
       .enter().append("g")
         .attr("class", "src_individual")
-        .attr("transform", function(d) { return "translate(" + d.targeted_link.source.x + "," + (d.targeted_link.source.y + d.targeted_link.sy) + ")"; });
+        .attr("transform", function(d) { return "translate(" + (d.targeted_link.source.x - 1*sankey.nodeWidth()) + "," + (d.targeted_link.source.y + d.targeted_link.sy) + ")"; });
 
     src_individual.append("rect")
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
@@ -366,8 +375,8 @@ var graph = raw.model();
       .data(filtered_target_individuals)
       .enter().append("g")
         .attr("class", "tgt_individual")
-        .attr("transform", function(d) { return "translate(" + d.targeted_link.target.x + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")"; })
-        .style("hover text", function(d) {"display: block"});
+        .attr("transform", function(d) { return "translate(" + (d.targeted_link.target.x + 1*sankey.nodeWidth()) + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")"; });
+//        .style("hover text", function(d) {"display: block"});
 
     tgt_individual.append("rect")
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
