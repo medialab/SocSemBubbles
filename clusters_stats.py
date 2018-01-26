@@ -122,7 +122,7 @@ def get_mismatch_from_alignment(bootstraps_list, bootstrap_alignment, intersecti
 
 def fuse_core_communities(bootstraps_list, confidence_threshold):
     """Fuse bootstraps core communities by taking smaller clusters, aligning
-    them and taking 95% intersection (aka: the intersection across all bootstraps
+    them and taking confidence_threshold intersection (aka: the intersection across all bootstraps
     + nodes present in 95% of bootstraps' took clusters).
     """
     something_clustered = True
@@ -138,7 +138,7 @@ def fuse_core_communities(bootstraps_list, confidence_threshold):
 
         (current_bootstrap_alignment, current_community_anchor_set) = align_bootstraps(bootstraps_list, bootstrap_index)
 
-        # We have a plausible community alignment, now start to make the 95% merge
+        # We have a plausible community alignment, now start to make the confidence_threshold merge
         ## Intersection (by the way, check if we really aligned more than one bootstrap - aka we clustered something)
         tmp_intersection_set = current_community_anchor_set.copy()
         for b_index, c_index in enumerate(current_bootstrap_alignment):
