@@ -184,13 +184,13 @@ def get_basic_communities_diversity(source_communities, target_communities, one_
                     communities_links[community].add(target_partition[target_node])
     return communities_links
 
-def get_nodes_distribution(source_communities, target_communities, one_to_two_nodes_edges_dict):
+def get_nodes_distribution(source_to_target_node_links, source_core_communities, target_core_communities):
     """Returns dict keyed by node conveying target community's clusters connection."""
     nodes_links = {}
-    target_partition = get_partitions_from_communities(target_communities)
-    for community, node_set in source_communities.items():
+    target_partition = get_partitions_from_communities(target_core_communities)
+    for community, node_set in source_core_communities.items():
         for node in node_set:
-            node_targets = one_to_two_nodes_edges_dict[node]
+            node_targets = source_to_target_node_links[node]
             nodes_links[node] = {'total': len(node_targets), 'total_in_core':0, 'core_distribution':{}}
             for target_node in node_targets:
                 if target_node in target_partition:# It's in a core !
@@ -203,7 +203,7 @@ def get_nodes_distribution(source_communities, target_communities, one_to_two_no
 
 ### Null-Model ###
 
-def null_model_probabilities(target_core_communities, total_target_nodes_count):
+def null_model_probabilities(total_target_nodes_count, target_core_communities):
     """Compute the null-model probabilities. Low-level, might change,
     use another null-model hypothesis, disappear => don't use it.
     """
@@ -217,18 +217,18 @@ def null_model_probabilities(target_core_communities, total_target_nodes_count):
     probabilities['other'] = not_in_cores_target_nodes_count / total_target_nodes_count
     return probabilities
 
-def null_model_expected_value_for_node(total_node_links, target_core_communities, total_target_nodes_count):
+def null_model_expected_value_for_node(total_target_nodes_count, total_node_links, target_core_communities):
     """Returns the expected links distribution across clusters according to the null-model."""
     # Hypothesis: multinomial case
     expected_values = {}
-    null_model_probabilities_dict = null_model_probabilities(target_core_communities, total_target_nodes_count)
+    null_model_probabilities_dict = null_model_probabilities(total_target_nodes_count, target_core_communities)
     for community, community_probability in null_model_probabilities_dict.items():
         expected_values[community] = total_node_links*community_probability
     return expected_values
 
 ### Fingerprint ###
 
-def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, total_target_nodes_count):
+def nodes_distribution_fingerprint(total_target_nodes_count, nodes_distribution, target_core_communities):
     """Compute the nodes fingerprint: for each node, take the links distribution
     and divide it by the equivalent expected distribution under a null-model hypothesis.
     """
@@ -240,7 +240,7 @@ def nodes_distribution_fingerprint(nodes_distribution, target_core_communities, 
     for node_key, node_dist_dict in nodes_distribution.items():
         nodes_fingerprint[node_key] = {}
 
-        null_model_freq = null_model_expected_value_for_node(node_dist_dict['total'], target_core_communities, total_target_nodes_count)
+        null_model_freq = null_model_expected_value_for_node(total_target_nodes_count, node_dist_dict['total'], target_core_communities)
         for community_key, community_freq in node_dist_dict['core_distribution'].items():
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
@@ -276,24 +276,24 @@ def communities_distribution_by_median(nodes_fingerprint, source_communities):
             communities_median_distribution[community_id][target_community_key] = median_with_geometric_interpolation(communities_median_distribution[community_id][target_community_key])
     return communities_median_distribution
 
-def communities_distribution_by_overall_fingerprint(nodes_distribution, source_core_communities, target_core_communities, total_target_nodes_count):
+def communities_distribution_by_overall_fingerprint(total_target_nodes_count, nodes_distribution, source_core_communities, target_core_communities):
     """Compute each source communities fingerprint by grouping all its nodes' links into a virtual
     node representing the overall source community, and computing the fingerprint of that
     virtual node.
     """
-    communities_fingerprint = {}
+    communities_distribution = {}
     for community_key, nodes_set in source_core_communities.items():
-        communities_fingerprint[community_key] = {'total': 0, 'total_in_core':0, 'core_distribution':{}}
+        communities_distribution[community_key] = {'total': 0, 'total_in_core':0, 'core_distribution':{}}
         for community_node in nodes_set:
-            communities_fingerprint[community_key]['total'] += nodes_distribution[community_node]['total']
-            communities_fingerprint[community_key]['total_in_core'] += nodes_distribution[community_node]['total_in_core']
+            communities_distribution[community_key]['total'] += nodes_distribution[community_node]['total']
+            communities_distribution[community_key]['total_in_core'] += nodes_distribution[community_node]['total_in_core']
             for target_community_key, target_community_key_weight in nodes_distribution[community_node]['core_distribution'].items():
-                if target_community_key not in communities_fingerprint[community_key]['core_distribution']:
-                    communities_fingerprint[community_key]['core_distribution'][target_community_key] = target_community_key_weight
+                if target_community_key not in communities_distribution[community_key]['core_distribution']:
+                    communities_distribution[community_key]['core_distribution'][target_community_key] = target_community_key_weight
                 else:
-                    communities_fingerprint[community_key]['core_distribution'][target_community_key] += target_community_key_weight
+                    communities_distribution[community_key]['core_distribution'][target_community_key] += target_community_key_weight
     #print(communities_fingerprint)
-    return nodes_distribution_fingerprint(communities_fingerprint, target_core_communities, total_target_nodes_count)
+    return nodes_distribution_fingerprint(total_target_nodes_count, communities_distribution, target_core_communities)
 
 
 if __name__ == "__main__":
@@ -396,16 +396,16 @@ if __name__ == "__main__":
         #null_model_prob = null_model_probabilities(original_concept_communities, len(binocular_datastructure['concepts']))
         #print(null_model_prob)
 
-        actor_nodes_dispatch = get_nodes_distribution(final_actor_communities, final_concept_communities, binocular_datastructure['ac'])
-        concept_nodes_dispatch = get_nodes_distribution(final_concept_communities, final_actor_communities, binocular_datastructure['ca'])
+        actor_nodes_dispatch = get_nodes_distribution(binocular_datastructure['ac'], final_actor_communities, final_concept_communities)
+        concept_nodes_dispatch = get_nodes_distribution(binocular_datastructure['ca'], final_concept_communities, final_actor_communities)
         print(actor_nodes_dispatch)
         #null_model_expected_value_for_node(nodes_dispatch['Julia'], null_model_prob)
-        nodes_f = nodes_distribution_fingerprint(actor_nodes_dispatch, final_concept_communities, len(binocular_datastructure['concepts']))
+        nodes_f = nodes_distribution_fingerprint(len(binocular_datastructure['concepts']), actor_nodes_dispatch, final_concept_communities)
         print(nodes_f)
         print()
         print(communities_distribution_by_median(nodes_f, final_actor_communities))
-        actor_fingerprint = communities_distribution_by_overall_fingerprint(actor_nodes_dispatch, final_actor_communities, final_concept_communities, len(binocular_datastructure['concepts']))
-        concept_fingerprint = communities_distribution_by_overall_fingerprint(concept_nodes_dispatch, final_concept_communities, final_actor_communities, len(binocular_datastructure['actors']))
+        actor_fingerprint = communities_distribution_by_overall_fingerprint(len(binocular_datastructure['concepts']), actor_nodes_dispatch, final_actor_communities, final_concept_communities)
+        concept_fingerprint = communities_distribution_by_overall_fingerprint(len(binocular_datastructure['actors']), concept_nodes_dispatch, final_concept_communities, final_actor_communities)
         print(actor_fingerprint)
         with open(sys.argv[2], 'w') as g, open(sys.argv[3], 'w') as h:
             actor_dict = []
