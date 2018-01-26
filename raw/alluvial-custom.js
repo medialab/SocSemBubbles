@@ -114,7 +114,7 @@ var graph = raw.model();
 		.description(
             "Alluvial diagrams allow to represent flows and to see correlations between categorical dimensions, visually linking to the number of elements sharing the same categories. It is useful to see the evolution of cluster (such as the number of people belonging to a specific group). It can also be used to represent bipartite graphs, using each node group as dimensions.<br/>Mainly based on DensityDesign's work with Fineo, it is inspired by <a href='http://bost.ocks.org/mike/sankey/'>http://bost.ocks.org/mike/sankey/</a>")
 		.thumbnail("imgs/alluvial.png")
-		.category("Multi categorical - Customized version")
+		.category("Multi categorical")
 		.model(graph)
 
 	var width = chart.number()
@@ -228,12 +228,14 @@ var graph = raw.model();
     // === Making individuals values ===
     // Hardcoded colors from IWantHue
     var color_palette = [
-    ["#b96f74"],
-    ["#b067a3", "#9c954d"],
-    ["#cb6a49", "#a46cb7", "#7aa457"],
-    ["#bf823b", "#9372c6", "#6ca75d", "#cc556f"],
-    ["#72a555", "#ab62c0", "#c57c3c", "#638ccc", "#ca5670"]
+    ["#c77c80"],
+    ["#ab6bb7", "#aba554"],
+    ["#a6b64d", "#9d6dcb", "#cc7b6f"],
+    ["#cb6745", "#9b5cd2", "#94be5b", "#b57eb4"],
+    ["#cb5c85", "#9ec94a", "#966ace", "#6dbc90", "#c4773f"]
     ];
+
+    var name_to_color = {};
 
     var filtered_source_individuals = [];
     var nested_source_individuals = {};
@@ -241,6 +243,11 @@ var graph = raw.model();
 
     for (var src_ind_offset in source_individuals) {
       d = source_individuals[src_ind_offset];
+
+      if (!(d.name in name_to_color))
+        name_to_color[d.name] = d.total_individuals < 6 ?
+          color_palette[d.total_individuals-1][d.community_offset] :
+          "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
 
       if (d.community_offset == 0) {
         ++src_key;
@@ -267,6 +274,11 @@ var graph = raw.model();
 
     for (var tgt_ind_offset in target_individuals) {
       d = target_individuals[tgt_ind_offset];
+
+      if (!(d.name in name_to_color))
+        name_to_color[d.name] = d.total_individuals < 6 ?
+          color_palette[d.total_individuals-1][d.community_offset] :
+          "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
 
       if (d.community_offset == 0) {
         ++tgt_key;
@@ -316,7 +328,7 @@ var graph = raw.model();
 		node.append("rect")
 		    .attr("height", function(d) { return d.dy; })
 		    .attr("width", sankey.nodeWidth())
-		    .style("fill", function (d) { return d.sourceLinks.length ? colors(d.name) : "#666"; })
+		    .style("fill", function (d) { return "#000"; })
 		    .append("title")
 		    	.text(function(d) { return d.name + "\n" + format(d.value); });
 
@@ -345,10 +357,10 @@ var graph = raw.model();
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
-      .style("fill", function(d) { return d.present ? (d.total_individuals < 6 ? color_palette[d.total_individuals-1][d.community_offset] : "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")" ) : "#666"; });
+      .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
       
-      src_individual.append("text")
-      .text(function(d) { return d.name; });
+//      src_individual.append("text")
+//      .text(function(d) { return d.name; });
 // TODO: display on hover ?
     var tgt_individual = g.append("g").selectAll(".tgt_individual")
       .data(filtered_target_individuals)
@@ -361,10 +373,10 @@ var graph = raw.model();
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
-      .style("fill", function(d) { return d.present ? (d.total_individuals < 6 ? color_palette[d.total_individuals-1][d.community_offset] : "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")" ) : "#666"; });
+      .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
 
-      tgt_individual.append("text").text(function(d) { return d.name; })
-      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); });
+//      tgt_individual.append("text").text(function(d) { return d.name; })
+//      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); });
 
 	})
 
