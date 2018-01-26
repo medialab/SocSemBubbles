@@ -337,12 +337,12 @@ var graph = raw.model();
 		node.append("rect")
 		    .attr("height", function(d) { return d.dy; })
 		    .attr("width", sankey.nodeWidth())
-		    .style("fill", function (d) { return "#000"; })
+		    .style("fill", function (d) { return "#FFF"; })
 		    .append("title")
 		    	.text(function(d) { return d.name + "\n" + format(d.value); });
 
 		node.append("text")
-		    .attr("x", -6)
+		    .attr("x", sankey.nodeWidth())
 	      	.attr("y", function (d) { return d.dy / 2; })
 	      	.attr("dy", ".35em")
 	      	.attr("text-anchor", "end")
@@ -352,7 +352,7 @@ var graph = raw.model();
 				.style("font-family","Arial, Helvetica")
 			    .style("pointer-events","none")
 			    .filter(function(d) { return d.x < +width() / 2; })
-			    .attr("x", 6 + sankey.nodeWidth())
+			    .attr("x", 0)
 		     	.attr("text-anchor", "start");
 
 
@@ -367,9 +367,18 @@ var graph = raw.model();
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
       .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
-      
-//      src_individual.append("text")
-//      .text(function(d) { return d.name; });
+
+    src_individual.append("text")
+      .attr("x", 6 + sankey.nodeWidth())
+      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
+      .attr("dy", ".35em")
+      .attr("transform", null)
+      .text(function(d) { return d.name; })
+      .style("font-size","11px")
+      .style("font-family","Arial, Helvetica")
+      .style("pointer-events","none")
+      .attr("text-anchor", "start");
+
 // TODO: display on hover ?
     var tgt_individual = g.append("g").selectAll(".tgt_individual")
       .data(filtered_target_individuals)
@@ -384,8 +393,16 @@ var graph = raw.model();
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
       .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
 
-//      tgt_individual.append("text").text(function(d) { return d.name; })
-//      .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); });
+    tgt_individual.append("text")
+      .attr("x", -6 -sankey.nodeWidth())
+      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
+      .attr("dy", ".35em")
+      .attr("text-anchor", "end")
+      .attr("transform", null)
+      .text(function(d) { return d.name; })
+      .style("font-size","11px")
+      .style("font-family","Arial, Helvetica")
+      .style("pointer-events","none")
 
 	})
 
