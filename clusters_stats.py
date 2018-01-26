@@ -67,12 +67,6 @@ def get_core_communities_from_two(first_communities, second_communities):
 
     for key_first, key_second in map_first_to_second.items():
          core_communities[core_key] = first_communities[key_first] & second_communities[key_second]
-         #for evicted_node in first_communities[key_first] ^ second_communities[key_second]:
-         #   print(evicted_node, 'evicted because it belongs to', end=" ")
-         #   if evicted_node in first_communities[key_first]:
-         #      print('first community but not second')
-         #   else:
-         #       print('second community but not first')
          core_key += 1
 
     return core_communities
@@ -173,67 +167,6 @@ def fuse_core_communities(bootstraps_list):
             cluster_stack.append(final_community)
     fused_core_communities = {key: community for key, community in enumerate(cluster_stack)}
     return fused_core_communities
-
-### (not exactly an) Implementation attempt of Rosvall M, Bergstrom CT (2010) Mapping Change in Large Networks. PLoS ONE 5(1): e8694. doi:10.1371/journal.pone.0008694 ###
-
-def get_best_bootstrap_community_and_candidate_alignment(bootstrap_communities, candidate_subset):
-    max_alignment = 0
-    best_community_key = None
-    for community_key, community_set in bootstrap_communities.items():
-        current_alignment = len(community_set & candidate_subset)
-        if current_alignment > max_alignment:
-            max_alignment = current_alignment
-            best_community_key = community_key
-    return best_community_key
-
-def get_configuration_penalty(bootstraps_communities, candidate_subset):
-    penalty = 0
-    mismatch_nodes = {}
-    # Get all the nodes mismatch
-    for bootstrap_key, bootstrap_communities in bootstraps_communities.items():
-        current_bootstrap_key = get_best_bootstrap_community_and_candidate_alignment(bootstrap_communities, candidate_subset)
-        for current_mismatched_node in bootstrap_communities[current_bootstrap_key] - candidate_subset:
-            if current_mismatched_node not in mismatch_nodes:
-                mismatch_nodes[current_mismatched_node] = {'count': 0, 'key': current_mismatched_node}
-            mismatch_nodes[current_mismatched_node]['count'] += 1
-    # Suppress higher 5%
-    sorted_list = sorted(list(mismatch_nodes.values()), itemgetter('count'), reverse=True)
-    sorted_list_size = len(sorted_list)
-    start_index = ceil(sorted_list_size*5/100)
-    #for index in range(start_index, len(sorted_list)):
-    penalty = sorted_list_size - start_index
-    return penalty
-
-def get_configuration_score(bootstraps_communities, candidate_subset):
-    mismatch_penalty = get_configuration_penalty(bootstraps_communities, candidate_subset)
-    configuration_score = len(candidate_subset) - 10*mismatch_penalty
-    return configuration_score
-
-def generate_new_configuration():
-    pass
-
-
-### Simulated Annealing ###
-# Reference : Kirkpatrick S, C D Gelatt J, Vecchi MP (1983) Optimization by simulated annealing. Science 220: 671–680.
-
-def compute_simulated_annealing(bootstraps_communities):
-    old_configuration = generate_new_configuration()
-    old_score = get_configuration_score(bootstraps_communities, old_configuration)
-    T = 1
-    keep_going = True
-    kept_configurations = [{'config': old_configuration, 'score': old_score}]
-    while keep_going and T > 0:
-        keep_going = False
-        current_configuration = generate_new_configuration()
-        current_score = get_configuration_score(bootstraps_communities, current_configuration)
-        score_diff = current_score - old_score
-        if score_diff > 0 or random.random() < exp(score_diff/T):
-            kept_configurations.append({'config': current_configuration, 'score': current_score})
-            #old_configuration = current_configuration
-            old_score = current_score
-            keep_going = True
-        T = 0.99*T
-    return max(kept_configurations)
 
 ### Communities diversity ###
 
