@@ -1,4 +1,4 @@
-import json, sys, csv
+import json, sys
 import networkx as nx
 import community
 from operator import itemgetter
@@ -408,10 +408,6 @@ if __name__ == "__main__":
         concept_fingerprint = communities_distribution_by_overall_fingerprint(concept_nodes_dispatch, final_concept_communities, final_actor_communities, len(binocular_datastructure['actors']))
         print(actor_fingerprint)
         with open(sys.argv[2], 'w') as g, open(sys.argv[3], 'w') as h:
-            #concept_writer = csv.writer(g)
-            #actor_writer = csv.writer(h)
-            #actor_writer.writerow(['Implied_actors_source_nodes', 'Implied_concepts_target_nodes','Actor_community', 'Concept_target', 'Weight'])
-            #concept_writer.writerow(['Implied_concepts_source_nodes', 'Implied_actors_target_nodes','Concept_community', 'Actor_target', 'Weight'])
             actor_dict = []
             concept_dict = []
 
@@ -439,7 +435,6 @@ if __name__ == "__main__":
                         'present': target_node in target_reached_nodes_set
                         })
                         
-                    #actor_writer.writerow([json.dumps(considered_source_nodes), json.dumps(considered_target_nodes), source_community, target_community, w])
                     actor_dict.append({
                     'Implied_actors_source_nodes': json.dumps(considered_source_nodes),
                     'Implied_concepts_target_nodes': json.dumps(considered_target_nodes),
@@ -473,7 +468,6 @@ if __name__ == "__main__":
                         'present': target_node in target_reached_nodes_set
                         })
 
-                    #concept_writer.writerow([json.dumps(considered_source_nodes), json.dumps(considered_target_nodes), source_community, target_community, w])
                     concept_dict.append({
                     'Implied_concepts_source_nodes': json.dumps(considered_source_nodes),
                     'Implied_actors_target_nodes': json.dumps(considered_target_nodes),
