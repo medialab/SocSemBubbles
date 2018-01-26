@@ -226,16 +226,21 @@ var graph = raw.model();
 		})
 
     // === Making individuals values ===
-    var src_indivi_colors = {};
+    // Hardcoded colors from IWantHue
+    var color_palette = [
+    ["#b96f74"],
+    ["#b067a3", "#9c954d"],
+    ["#cb6a49", "#a46cb7", "#7aa457"],
+    ["#bf823b", "#9372c6", "#6ca75d", "#cc556f"],
+    ["#72a555", "#ab62c0", "#c57c3c", "#638ccc", "#ca5670"]
+    ];
+
     var filtered_source_individuals = [];
     var nested_source_individuals = {};
     var src_key = -1;
 
     for (var src_ind_offset in source_individuals) {
       d = source_individuals[src_ind_offset];
-
-      if (!(d.name in src_indivi_colors))
-        src_indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
 
       if (d.community_offset == 0) {
         ++src_key;
@@ -256,16 +261,12 @@ var graph = raw.model();
       }
     }
 
-    var tgt_indivi_colors = {};
     var filtered_target_individuals = [];
     var nested_target_individuals = {};
     var tgt_key = -1;
 
     for (var tgt_ind_offset in target_individuals) {
       d = target_individuals[tgt_ind_offset];
-
-      if (!(d.name in src_indivi_colors))
-        tgt_indivi_colors[d.name] = "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
 
       if (d.community_offset == 0) {
         ++tgt_key;
@@ -344,7 +345,7 @@ var graph = raw.model();
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
-      .style("fill", function(d) { return d.present ? src_indivi_colors[d.name] : "#666"; });
+      .style("fill", function(d) { return d.present ? (d.total_individuals < 6 ? color_palette[d.total_individuals-1][d.community_offset] : "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")" ) : "#666"; });
       
       src_individual.append("text")
       .text(function(d) { return d.name; });
@@ -360,7 +361,7 @@ var graph = raw.model();
       .attr("height", function(d) { return d.targeted_link.dy/d.total_individuals; })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); })
-      .style("fill", function(d) { return d.present ? tgt_indivi_colors[d.name] : "#666"; });
+      .style("fill", function(d) { return d.present ? (d.total_individuals < 6 ? color_palette[d.total_individuals-1][d.community_offset] : "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")" ) : "#666"; });
 
       tgt_individual.append("text").text(function(d) { return d.name; })
       .attr("y", function(d) { return d.community_offset*(d.targeted_link.dy/d.total_individuals); });
