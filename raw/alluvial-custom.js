@@ -60,13 +60,13 @@ var graph = raw.model();
             // === CUSTOM ===
             var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
             for (var offset in source_individuals_list) {
-              var individual = { targeted_link : link, name : source_individuals_list[offset].name, present : source_individuals_list[offset].present, community_offset : offset, total_individuals : source_individuals_list.length };
+              var individual = { targeted_link : link, name : source_individuals_list[offset].name, present : source_individuals_list[offset].present, community_offset : Number(offset), total_individuals : source_individuals_list.length };
               src_ind.push(individual);
             }
 
             var target_individuals_list = JSON.parse(t.values[0][individuals()[1]]);
             for (var offset in target_individuals_list) {
-              var individual = { targeted_link : link, name : target_individuals_list[offset].name, present : target_individuals_list[offset].present, community_offset : offset, total_individuals : target_individuals_list.length };
+              var individual = { targeted_link : link, name : target_individuals_list[offset].name, present : target_individuals_list[offset].present, community_offset : Number(offset), total_individuals : target_individuals_list.length };
               tgt_ind.push(individual);
             }
             // =============
