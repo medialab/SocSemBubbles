@@ -86,24 +86,24 @@
 
           // === CUSTOM ===
           var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
-          for (var offset in source_individuals_list) {
+          for (var offset_src in source_individuals_list) {
             var individual = {
               targeted_link: link,
-              name: source_individuals_list[offset].name,
-              present: source_individuals_list[offset].present,
-              community_offset: Number(offset),
+              name: source_individuals_list[offset_src].name,
+              present: source_individuals_list[offset_src].present,
+              community_offset: Number(offset_src),
               total_individuals: source_individuals_list.length
             };
             src_ind.push(individual);
           }
 
           var target_individuals_list = JSON.parse(t.values[0][individuals()[1]]);
-          for (var offset in target_individuals_list) {
+          for (var offset_tgt in target_individuals_list) {
             var individual = {
               targeted_link: link,
-              name: target_individuals_list[offset].name,
-              present: target_individuals_list[offset].present,
-              community_offset: Number(offset),
+              name: target_individuals_list[offset_tgt].name,
+              present: target_individuals_list[offset_tgt].present,
+              community_offset: Number(offset_tgt),
               total_individuals: target_individuals_list.length
             };
             tgt_ind.push(individual);
@@ -317,9 +317,13 @@
       d = nested_source_individuals[nested_source_offset];
       var total = d.length;
       for (var offset in d) {
-        d[offset].community_offset = offset;
-        d[offset].total_individuals = total;
-        filtered_source_individuals.push(d[offset]);
+        var f_d = {
+        community_offset: Number(offset),
+        total_individuals: total,
+        targeted_link: d[offset].targeted_link,
+        name: d[offset].name
+        };
+        filtered_source_individuals.push(f_d);
       }
     }
 
@@ -349,9 +353,13 @@
       d = nested_target_individuals[nested_target_offset];
       var total = d.length;
       for (var offset in d) {
-        d[offset].community_offset = offset;
-        d[offset].total_individuals = total;
-        filtered_target_individuals.push(d[offset]);
+        var f_d = {
+        community_offset: Number(offset),
+        total_individuals: total,
+        targeted_link: d[offset].targeted_link,
+        name: d[offset].name
+        };
+        filtered_target_individuals.push(f_d);
       }
     }
 
@@ -454,7 +462,10 @@
         return d.community_offset * (d.targeted_link.dy / d.total_individuals);
       })
       .style("fill", function(d) {
-        return d.present ? name_to_color[d.name] : "#666";
+        return colors()(d.targeted_link.source.name)
+      })
+      .style("opacity", function(d) {
+        return (d.community_offset+1)/d.total_individuals;
       });
 
     src_individual.append("text")
@@ -493,7 +504,7 @@
         return d.community_offset * (d.targeted_link.dy / d.total_individuals);
       })
       .style("fill", function(d) {
-        return d.present ? name_to_color[d.name] : "#666";
+        return name_to_color[d.name];
       });
 
     tgt_individual.append("text")
