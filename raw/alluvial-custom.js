@@ -369,15 +369,15 @@ var graph = raw.model();
       .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
 
     src_individual.append("text")
-      .attr("x", 6 + sankey.nodeWidth())
-      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
-      .attr("dy", ".35em")
-      .attr("transform", null)
-      .text(function(d) { return d.name; })
-      .style("font-size","11px")
-      .style("font-family","Arial, Helvetica")
-      .style("pointer-events","none")
-      .attr("text-anchor", "start");
+		    .attr("x", 3 + 2*sankey.nodeWidth())
+	      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
+	      .attr("dy", ".35em")
+	      .attr("transform", null)
+			  .text(function(d) { return d.name; })
+			  .style("font-size", function(d) { return Math.min(11, d.targeted_link.dy/(1.1*d.total_individuals))+"px"; })
+				.style("font-family","Arial, Helvetica")
+			  .style("pointer-events","none")
+		    .attr("text-anchor", "start");
 
 // TODO: display on hover ?
     var tgt_individual = g.append("g").selectAll(".tgt_individual")
@@ -394,15 +394,15 @@ var graph = raw.model();
       .style("fill", function(d) { return d.present ? name_to_color[d.name] : "#666"; });
 
     tgt_individual.append("text")
-      .attr("x", -6 -sankey.nodeWidth())
-      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
-      .attr("dy", ".35em")
-      .attr("text-anchor", "end")
-      .attr("transform", null)
-      .text(function(d) { return d.name; })
-      .style("font-size","11px")
-      .style("font-family","Arial, Helvetica")
-      .style("pointer-events","none")
+		    .attr("x", -3 -sankey.nodeWidth())
+	      .attr("y", function (d) { return (d.community_offset)*(d.targeted_link.dy/d.total_individuals) + d.targeted_link.dy/(2*d.total_individuals); })
+	      .attr("dy", ".35em")
+	      .attr("text-anchor", "end")
+	      .attr("transform", null)
+			  .text(function(d) { return d.name; })
+			  .style("font-size", function(d) { return Math.min(11, d.targeted_link.dy/(1.1*d.total_individuals))+"px"; })
+				.style("font-family","Arial, Helvetica")
+			  .style("pointer-events","none")
 
 	})
 
