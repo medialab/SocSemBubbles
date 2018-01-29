@@ -244,10 +244,13 @@ var graph = raw.model();
     for (var src_ind_offset in source_individuals) {
       d = source_individuals[src_ind_offset];
 
-      if (!(d.name in name_to_color))
-        name_to_color[d.name] = d.total_individuals < 6 ?
-          color_palette[d.total_individuals-1][d.community_offset] :
-          "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
+      if (!(d.name in name_to_color)) {
+        //name_to_color[d.name] = d.total_individuals < 6 ?
+        //  color_palette[d.total_individuals-1][d.community_offset] :
+        //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
+        name_to_color[d.name] = "rgba(191, 105, 105, " + (d.community_offset+1)/d.total_individuals +")";
+//        individualColors()(d.name) =  name_to_color[d.name];
+      }
 
       if (d.community_offset == 0) {
         ++src_key;
@@ -276,9 +279,10 @@ var graph = raw.model();
       d = target_individuals[tgt_ind_offset];
 
       if (!(d.name in name_to_color))
-        name_to_color[d.name] = d.total_individuals < 6 ?
-          color_palette[d.total_individuals-1][d.community_offset] :
-          "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
+        //name_to_color[d.name] = d.total_individuals < 6 ?
+        //  color_palette[d.total_individuals-1][d.community_offset] :
+        //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
+        name_to_color[d.name] = "rgba(105, 105, 191, " + (d.community_offset+1)/d.total_individuals +")";
 
       if (d.community_offset == 0) {
         ++tgt_key;
