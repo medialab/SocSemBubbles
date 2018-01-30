@@ -287,7 +287,8 @@
       ["#cb5c85", "#9ec94a", "#966ace", "#6dbc90", "#c4773f"]
     ];
 
-    var name_to_color = {};
+    //var name_to_color = {};
+    var name_to_opacity = {}
 
     var filtered_source_individuals = [];
     var nested_source_individuals = {};
@@ -296,13 +297,15 @@
     for (var src_ind_offset in source_individuals) {
       d = source_individuals[src_ind_offset];
 
-      if (!(d.name in name_to_color)) {
+      //if (!(d.name in name_to_color)) {
         //name_to_color[d.name] = d.total_individuals < 6 ?
         //  color_palette[d.total_individuals-1][d.community_offset] :
         //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
-        name_to_color[d.name] = "rgba(191, 105, 105, " + (d.community_offset + 1) / d.total_individuals + ")";
+        //name_to_color[d.name] = "rgba(191, 105, 105, " + (d.community_offset + 1) / d.total_individuals + ")";
         //        individualColors()(d.name) =  name_to_color[d.name];
-      }
+      //}
+      if (!(d.name in name_to_opacity))
+        name_to_opacity[d.name] = (d.community_offset+1)/d.total_individuals;
 
       if (d.community_offset == 0) {
         ++src_key;
@@ -334,11 +337,14 @@
     for (var tgt_ind_offset in target_individuals) {
       d = target_individuals[tgt_ind_offset];
 
-      if (!(d.name in name_to_color))
+      //if (!(d.name in name_to_color))
         //name_to_color[d.name] = d.total_individuals < 6 ?
         //  color_palette[d.total_individuals-1][d.community_offset] :
         //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
-        name_to_color[d.name] = "rgba(105, 105, 191, " + (d.community_offset + 1) / d.total_individuals + ")";
+        //name_to_color[d.name] = "rgba(105, 105, 191, " + (d.community_offset + 1) / d.total_individuals + ")";
+
+      if (!(d.name in name_to_opacity))
+        name_to_opacity[d.name] = (d.community_offset+1)/d.total_individuals;
 
       if (d.community_offset == 0) {
         ++tgt_key;
@@ -378,12 +384,31 @@
     //    console.log(filtered_target_individuals);
     // padding of 10 (px ??) between nodes => next node y coordinate is current_node.y+current_node.dy+10.
     colors.domain(links, function(d) {
+      //return d.source.group + d.source.name;
       return d.source.name;
     });
 
+    colors.domain(links, function(d) {
+      //return d.target.group + d.target.name;
+      return d.target.name;
+    });
+
+    var ldefs = g.append("defs").selectAll(".def")
+      .data(links)
+      .enter().append("linearGradient")
+      .attr("id", function(d) {return d.source.name + d.target.name;});
+      ldefs.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", function(d) { return colors()(/*d.source.group +*/ d.source.name); });
+      ldefs.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", function(d) { return colors()(/*d.target.group + */d.target.name); })
+
     var link = g.append("g").selectAll(".link")
       .data(links)
-      .enter().append("path")
+      .enter();
+
+      link.append("path")
       .attr("class", "link")
       .attr("d", path)
       .style("stroke-width", function(d) {
@@ -391,7 +416,8 @@
       })
       .style("fill", "none")
       .style("stroke", function(d) {
-        return colors()(d.source.name);
+        //return /*"linear-gradient(to right, "+*/colors()(d.source.group + d.source.name)/*+", blue)"*/;
+        return "url(#"+d.source.name + d.target.name+")";
       })
       .style("stroke-opacity", ".4")
       .sort(function(a, b) {
@@ -462,10 +488,11 @@
         return d.community_offset * (d.targeted_link.dy / d.total_individuals);
       })
       .style("fill", function(d) {
+        //return colors()(d.targeted_link.source.group + d.targeted_link.source.name)
         return colors()(d.targeted_link.source.name)
       })
       .style("opacity", function(d) {
-        return (d.community_offset+1)/d.total_individuals;
+        return name_to_opacity[d.name];
       });
 
     src_individual.append("text")
@@ -504,7 +531,11 @@
         return d.community_offset * (d.targeted_link.dy / d.total_individuals);
       })
       .style("fill", function(d) {
-        return name_to_color[d.name];
+        //return colors()(d.targeted_link.target.group + d.targeted_link.target.name);
+        return colors()(d.targeted_link.target.name);
+      })
+       .style("opacity", function(d) {
+        return name_to_opacity[d.name];
       });
 
     tgt_individual.append("text")
