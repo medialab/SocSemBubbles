@@ -228,6 +228,29 @@ def null_model_expected_value_for_node(total_target_nodes_count, total_node_link
 
 ### Fingerprint ###
 
+def hhi(values_list):
+    total = sum(values_list)
+    h = 0
+    for S in values_list:
+        h += (S/total)**2
+    return h
+
+def get_relevant_fingerprints(nodes_fingerprint):
+    relevant_fingerprints = {}
+    for node_key, node_fing_dict in nodes_fingerprint.items():
+        relevant_fingerprints[node_key] = {}
+        fingerprint_list = [{'key': k, 'value':v} for k, v in node_fing_dict.items()]
+        fingerprint_values = [v['value'] for v in fingerprint_list]
+        h = hhi(fingerprint_values)
+        relevant_number = max(1, floor(1/h))
+        sorted_fingerprints = sorted(fingerprint_list, key=itemgetter('value'), reverse=True)
+        relevant_fingerprints_list = sorted_fingerprints[:relevant_number]
+        for fingerprint in relevant_fingerprints_list:
+            fingerprint_key = fingerprint['key']
+            fingerprint_value = fingerprint['value']
+            relevant_fingerprints[node_key][fingerprint_key] = fingerprint_value
+    return relevant_fingerprints
+
 def nodes_distribution_fingerprint(total_target_nodes_count, nodes_distribution, target_core_communities):
     """Compute the nodes fingerprint: for each node, take the links distribution
     and divide it by the equivalent expected distribution under a null-model hypothesis.
