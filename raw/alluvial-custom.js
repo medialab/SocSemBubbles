@@ -288,16 +288,7 @@
     })
 
     // === Making individuals values ===
-    // Hardcoded colors from IWantHue
-    var colorPalette = [
-      ["#c77c80"],
-      ["#ab6bb7", "#aba554"],
-      ["#a6b64d", "#9d6dcb", "#cc7b6f"],
-      ["#cb6745", "#9b5cd2", "#94be5b", "#b57eb4"],
-      ["#cb5c85", "#9ec94a", "#966ace", "#6dbc90", "#c4773f"]
-    ];
 
-    //var name_to_color = {};
     var nameToOpacity = {}
 
     var filteredSourceIndividuals = [];
@@ -307,13 +298,6 @@
     for (var srcIndOffset in sourceIndividuals) {
       d = sourceIndividuals[srcIndOffset];
 
-      //if (!(d.name in name_to_color)) {
-        //name_to_color[d.name] = d.totalIndividuals < 6 ?
-        //  colorPalette[d.totalIndividuals-1][d.communityOffset] :
-        //  "rgb("+(255*(1-d.communityOffset/d.totalIndividuals))+', '+ 200 /*(100 * (1+ d.communityOffset%2))*/+', '+(255*d.communityOffset/d.totalIndividuals)+")";
-        //name_to_color[d.name] = "rgba(191, 105, 105, " + (d.communityOffset + 1) / d.totalIndividuals + ")";
-        //        individualColors()(d.name) =  name_to_color[d.name];
-      //}
       if (!(d.name in nameToOpacity))
         nameToOpacity[d.name] = (d.communityOffset+1)/d.totalIndividuals;
 
@@ -346,12 +330,6 @@
 
     for (var tgtIndOffset in targetIndividuals) {
       d = targetIndividuals[tgtIndOffset];
-
-      //if (!(d.name in name_to_color))
-        //name_to_color[d.name] = d.totalIndividuals < 6 ?
-        //  colorPalette[d.totalIndividuals-1][d.communityOffset] :
-        //  "rgb("+(255*(1-d.communityOffset/d.totalIndividuals))+', '+ 200 /*(100 * (1+ d.communityOffset%2))*/+', '+(255*d.communityOffset/d.totalIndividuals)+")";
-        //name_to_color[d.name] = "rgba(105, 105, 191, " + (d.communityOffset + 1) / d.totalIndividuals + ")";
 
       if (!(d.name in nameToOpacity))
         nameToOpacity[d.name] = (d.communityOffset+1)/d.totalIndividuals;
@@ -452,12 +430,10 @@
     //    console.log(filteredTargetIndividuals);
     // padding of 10 (px ??) between nodes => next node y coordinate is currentNode.y+currentNode.dy+10.
     colors.domain(links, function(d) {
-      //return d.source.group + d.source.name;
       return d.source.name;
     });
 
     colors.domain(links, function(d) {
-      //return d.target.group + d.target.name;
       return d.target.name;
     });
 
@@ -589,7 +565,6 @@
       .attr("transform", function(d) {
         return "translate(" + (d.targetedLink.target.x + 1 * sankey.nodeWidth()) + "," + (d.targetedLink.target.y + d.targetedLink.ty) + ")";
       });
-    //        .style("hover text", function(d) {"display: block"});
 
     tgtIndividual.append("rect")
       .attr("height", function(d) {
@@ -600,7 +575,6 @@
         return d.communityOffset * (d.targetedLink.dy / d.totalIndividuals);
       })
       .style("fill", function(d) {
-        //return colors()(d.targetedLink.target.group + d.targetedLink.target.name);
         return colors()(d.targetedLink.target.name);
       })
        .style("opacity", function(d) {
@@ -629,18 +603,12 @@
       .enter().append("g")
       .attr("class", "mosaic")
       .attr("transform", function(d) {
-        var arg = "translate("+ (d.sourceNode.x + 3*sankey.nodeWidth()) + "," + d.sourceNode.y + ")";
-//        console.log(d.name);
-//        console.log(arg);
-        return arg;
+        return "translate("+ (d.sourceNode.x + 3*sankey.nodeWidth()) + "," + d.sourceNode.y + ")";
       });
       var sourceMosaic = mosaic.filter(function(d) {
-//        console.log(d);
-//        console.log(d.sourceNode.x - (1*Number(sankey.nodeWidth()) + Number(mosaicWidth())), d.sourceNode.x + 1*Number(sankey.nodeWidth()));
         return d.sourceNode.x < +width() / 2;
       })
       .attr("transform", function(d) {
-//        console.log(d.name);
         return "translate("+ (d.sourceNode.x - 2*sankey.nodeWidth() - mosaicWidth()) + "," + d.sourceNode.y + ")";
       });
 
