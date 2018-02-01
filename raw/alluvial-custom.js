@@ -28,16 +28,16 @@
     var d = {
       nodes: [],
       links: [],
-      source_individuals: [],
-      target_individuals: []
+      sourceIndividuals: [],
+      targetIndividuals: []
     }
 
     if (!steps() || steps().length < 2) return d;
 
     var n = [],
       l = [],
-      src_ind = [],
-      tgt_ind = [],
+      srcInd = [],
+      tgtInd = [],
       si, ti;
 
     for (var i = 0; i < steps().length - 1; i++) {
@@ -85,30 +85,30 @@
           l.push(link);
 
           // === CUSTOM ===
-          var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
-          for (var offset_src in source_individuals_list) {
-            var ind_name = source_individuals_list[offset_src].name;
+          var sourceIndividualsList = JSON.parse(t.values[0][individuals()[0]]);
+          for (var offsetSrc in sourceIndividualsList) {
+            var indName = sourceIndividualsList[offsetSrc].name;
             var individual = {
-              targeted_link: link,
-              name: ind_name,
-              present: source_individuals_list[offset_src].present,
-              community_offset: Number(offset_src),
-              total_individuals: source_individuals_list.length
+              targetedLink: link,
+              name: indName,
+              present: sourceIndividualsList[offsetSrc].present,
+              communityOffset: Number(offsetSrc),
+              totalIndividuals: sourceIndividualsList.length
             };
-            src_ind.push(individual);
+            srcInd.push(individual);
           }
 
-          var target_individuals_list = JSON.parse(t.values[0][individuals()[1]]);
-          for (var offset_tgt in target_individuals_list) {
-            var ind_name = target_individuals_list[offset_tgt].name;
+          var targetIndividualsList = JSON.parse(t.values[0][individuals()[1]]);
+          for (var offsetTgt in targetIndividualsList) {
+            var indName = targetIndividualsList[offsetTgt].name;
             var individual = {
-              targeted_link: link,
-              name: ind_name,
-              present: target_individuals_list[offset_tgt].present,
-              community_offset: Number(offset_tgt),
-              total_individuals: target_individuals_list.length
+              targetedLink: link,
+              name: indName,
+              present: targetIndividualsList[offsetTgt].present,
+              communityOffset: Number(offsetTgt),
+              totalIndividuals: targetIndividualsList.length
             };
-            tgt_ind.push(individual);
+            tgtInd.push(individual);
           }
           // =============
         })
@@ -123,9 +123,9 @@
       d.target = n.indexOf(d.target)
     });
     d.links = l;
-    //ind.forEach(function (d){ d.targeted_link = l.indexOf(d.targeted_link); });
-    d.source_individuals = src_ind;
-    d.target_individuals = tgt_ind;
+    //ind.forEach(function (d){ d.targetedLink = l.indexOf(d.targetedLink); });
+    d.sourceIndividuals = srcInd;
+    d.targetIndividuals = tgtInd;
     return d;
 
   })
@@ -226,8 +226,8 @@
     var path = sankey.link(),
       nodes = data.nodes,
       links = data.links,
-      source_individuals = data.source_individuals,
-      target_individuals = data.target_individuals;
+      sourceIndividuals = data.sourceIndividuals,
+      targetIndividuals = data.targetIndividuals;
 
     sankey
       .nodes(nodes)
@@ -289,7 +289,7 @@
 
     // === Making individuals values ===
     // Hardcoded colors from IWantHue
-    var color_palette = [
+    var colorPalette = [
       ["#c77c80"],
       ["#ab6bb7", "#aba554"],
       ["#a6b64d", "#9d6dcb", "#cc7b6f"],
@@ -298,125 +298,125 @@
     ];
 
     //var name_to_color = {};
-    var name_to_opacity = {}
+    var nameToOpacity = {}
 
-    var filtered_source_individuals = [];
-    var nested_source_individuals = {};
-    var src_key = -1;
+    var filteredSourceIndividuals = [];
+    var nestedSourceIndividuals = {};
+    var srcKey = -1;
 
-    for (var src_ind_offset in source_individuals) {
-      d = source_individuals[src_ind_offset];
+    for (var srcIndOffset in sourceIndividuals) {
+      d = sourceIndividuals[srcIndOffset];
 
       //if (!(d.name in name_to_color)) {
-        //name_to_color[d.name] = d.total_individuals < 6 ?
-        //  color_palette[d.total_individuals-1][d.community_offset] :
-        //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
-        //name_to_color[d.name] = "rgba(191, 105, 105, " + (d.community_offset + 1) / d.total_individuals + ")";
+        //name_to_color[d.name] = d.totalIndividuals < 6 ?
+        //  colorPalette[d.totalIndividuals-1][d.communityOffset] :
+        //  "rgb("+(255*(1-d.communityOffset/d.totalIndividuals))+', '+ 200 /*(100 * (1+ d.communityOffset%2))*/+', '+(255*d.communityOffset/d.totalIndividuals)+")";
+        //name_to_color[d.name] = "rgba(191, 105, 105, " + (d.communityOffset + 1) / d.totalIndividuals + ")";
         //        individualColors()(d.name) =  name_to_color[d.name];
       //}
-      if (!(d.name in name_to_opacity))
-        name_to_opacity[d.name] = (d.community_offset+1)/d.total_individuals;
+      if (!(d.name in nameToOpacity))
+        nameToOpacity[d.name] = (d.communityOffset+1)/d.totalIndividuals;
 
-      if (d.community_offset == 0) {
-        ++src_key;
-        nested_source_individuals[src_key] = [];
+      if (d.communityOffset == 0) {
+        ++srcKey;
+        nestedSourceIndividuals[srcKey] = [];
       }
 
       if (d.present)
-        nested_source_individuals[src_key].push(d)
+        nestedSourceIndividuals[srcKey].push(d)
     }
 
-    for (var nested_source_offset in nested_source_individuals) {
-      d = nested_source_individuals[nested_source_offset];
+    for (var nestedSourceOffset in nestedSourceIndividuals) {
+      d = nestedSourceIndividuals[nestedSourceOffset];
       var total = d.length;
       for (var offset in d) {
-        var f_d = {
-        community_offset: Number(offset),
-        total_individuals: total,
-        targeted_link: d[offset].targeted_link,
+        var fD = {
+        communityOffset: Number(offset),
+        totalIndividuals: total,
+        targetedLink: d[offset].targetedLink,
         name: d[offset].name
         };
-        filtered_source_individuals.push(f_d);
+        filteredSourceIndividuals.push(fD);
       }
     }
 
-    var filtered_target_individuals = [];
-    var nested_target_individuals = {};
-    var tgt_key = -1;
+    var filteredTargetIndividuals = [];
+    var nestedTargetIndividuals = {};
+    var tgtKey = -1;
 
-    for (var tgt_ind_offset in target_individuals) {
-      d = target_individuals[tgt_ind_offset];
+    for (var tgtIndOffset in targetIndividuals) {
+      d = targetIndividuals[tgtIndOffset];
 
       //if (!(d.name in name_to_color))
-        //name_to_color[d.name] = d.total_individuals < 6 ?
-        //  color_palette[d.total_individuals-1][d.community_offset] :
-        //  "rgb("+(255*(1-d.community_offset/d.total_individuals))+', '+ 200 /*(100 * (1+ d.community_offset%2))*/+', '+(255*d.community_offset/d.total_individuals)+")";
-        //name_to_color[d.name] = "rgba(105, 105, 191, " + (d.community_offset + 1) / d.total_individuals + ")";
+        //name_to_color[d.name] = d.totalIndividuals < 6 ?
+        //  colorPalette[d.totalIndividuals-1][d.communityOffset] :
+        //  "rgb("+(255*(1-d.communityOffset/d.totalIndividuals))+', '+ 200 /*(100 * (1+ d.communityOffset%2))*/+', '+(255*d.communityOffset/d.totalIndividuals)+")";
+        //name_to_color[d.name] = "rgba(105, 105, 191, " + (d.communityOffset + 1) / d.totalIndividuals + ")";
 
-      if (!(d.name in name_to_opacity))
-        name_to_opacity[d.name] = (d.community_offset+1)/d.total_individuals;
+      if (!(d.name in nameToOpacity))
+        nameToOpacity[d.name] = (d.communityOffset+1)/d.totalIndividuals;
 
-      if (d.community_offset == 0) {
-        ++tgt_key;
-        nested_target_individuals[tgt_key] = [];
+      if (d.communityOffset == 0) {
+        ++tgtKey;
+        nestedTargetIndividuals[tgtKey] = [];
       }
 
       if (d.present)
-        nested_target_individuals[tgt_key].push(d)
+        nestedTargetIndividuals[tgtKey].push(d)
     }
 
-    for (var nested_target_offset in nested_target_individuals) {
-      d = nested_target_individuals[nested_target_offset];
+    for (var nestedTargetOffset in nestedTargetIndividuals) {
+      d = nestedTargetIndividuals[nestedTargetOffset];
       var total = d.length;
       for (var offset in d) {
-        var f_d = {
-        community_offset: Number(offset),
-        total_individuals: total,
-        targeted_link: d[offset].targeted_link,
+        var fD = {
+        communityOffset: Number(offset),
+        totalIndividuals: total,
+        targetedLink: d[offset].targetedLink,
         name: d[offset].name
         };
-        filtered_target_individuals.push(f_d);
+        filteredTargetIndividuals.push(fD);
       }
     }
 
     // === Computing individuals' mosaic ===
 
-    var mosaic_dict = {};
+    var mosaicDict = {};
 
-    source_array = [source_individuals, target_individuals]
-    target_key_array = ['target', 'source']
-    for (var src_offset in source_array) {
-      var src_ar = source_array[src_offset];
-      var target_node_offset = target_key_array[src_offset];
-      var source_node_offset = target_key_array[1-src_offset];
-      for (var offset in src_ar) {
-        var src_node = src_ar[offset];
-        if (!(src_node.name in mosaic_dict)) {
-          mosaic_dict[src_node.name] = {'sourceNode': src_node.targeted_link[source_node_offset], 'reachedTarget': {}, reachedTargetSize: 0}
-          for (var nested_offset in nodes) {
-            var current_node = nodes[nested_offset];
-            if (current_node.group === src_node.targeted_link[target_node_offset].group) {
-              mosaic_dict[src_node.name].reachedTarget[current_node.name] = false;
-              mosaic_dict[src_node.name].reachedTargetSize += 1;
+    sourceArray = [sourceIndividuals, targetIndividuals]
+    targetKeyArray = ['target', 'source']
+    for (var srcOffset in sourceArray) {
+      var srcAr = sourceArray[srcOffset];
+      var targetNodeOffset = targetKeyArray[srcOffset];
+      var sourceNodeOffset = targetKeyArray[1-srcOffset];
+      for (var offset in srcAr) {
+        var srcNode = srcAr[offset];
+        if (!(srcNode.name in mosaicDict)) {
+          mosaicDict[srcNode.name] = {'sourceNode': srcNode.targetedLink[sourceNodeOffset], 'reachedTarget': {}, reachedTargetSize: 0}
+          for (var nestedOffset in nodes) {
+            var currentNode = nodes[nestedOffset];
+            if (currentNode.group === srcNode.targetedLink[targetNodeOffset].group) {
+              mosaicDict[srcNode.name].reachedTarget[currentNode.name] = false;
+              mosaicDict[srcNode.name].reachedTargetSize += 1;
             }
           }
         }
-        if (src_node.present)
-          mosaic_dict[src_node.name].reachedTarget[src_node.targeted_link[target_node_offset].name] = true;
+        if (srcNode.present)
+          mosaicDict[srcNode.name].reachedTarget[srcNode.targetedLink[targetNodeOffset].name] = true;
       }
     }
-    console.log(mosaic_dict);
+    console.log(mosaicDict);
 
-    mosaic_array = [];
+    mosaicArray = [];
     perNodeYOffset = {};
-    for (var key in mosaic_dict) {
-      if (mosaic_dict.hasOwnProperty(key)) {
+    for (var key in mosaicDict) {
+      if (mosaicDict.hasOwnProperty(key)) {
 
-        var sourceNodeName = mosaic_dict[key].sourceNode.name + mosaic_dict[key].sourceNode.group;
+        var sourceNodeName = mosaicDict[key].sourceNode.name + mosaicDict[key].sourceNode.group;
         if (!(sourceNodeName in perNodeYOffset))
           perNodeYOffset[sourceNodeName] = 0;
 
-        var reachedTargets = mosaic_dict[key].reachedTarget;
+        var reachedTargets = mosaicDict[key].reachedTarget;
         for (var reachedTargetKey in reachedTargets) {
           if (reachedTargets.hasOwnProperty(reachedTargetKey)) {
             var mosaic = {
@@ -424,21 +424,21 @@
               'dy': perNodeYOffset[sourceNodeName],
               'dx': Number(reachedTargetKey), // UGLY !
               'present': reachedTargets[reachedTargetKey],
-              'sourceNode': mosaic_dict[key].sourceNode,
-              'targetSize': mosaic_dict[key].reachedTargetSize
+              'sourceNode': mosaicDict[key].sourceNode,
+              'targetSize': mosaicDict[key].reachedTargetSize
             };
-            mosaic_array.push(mosaic);
+            mosaicArray.push(mosaic);
           }
         }
         perNodeYOffset[sourceNodeName] += 1;
       }
     }
-    console.log(mosaic_array);
+    console.log(mosaicArray);
     console.log(perNodeYOffset);
 
   //  Correct nodes x coordinate
-    for (var node_offset in nodes) {
-      d = nodes[node_offset];
+    for (var nodeOffset in nodes) {
+      d = nodes[nodeOffset];
       if (d.x == 0)
         d.x = d.x + 2 * sankey.nodeWidth() + mosaicWidth();
       else
@@ -448,9 +448,9 @@
 
     // ==================================
 
-    //    console.log(filtered_source_individuals);
-    //    console.log(filtered_target_individuals);
-    // padding of 10 (px ??) between nodes => next node y coordinate is current_node.y+current_node.dy+10.
+    //    console.log(filteredSourceIndividuals);
+    //    console.log(filteredTargetIndividuals);
+    // padding of 10 (px ??) between nodes => next node y coordinate is currentNode.y+currentNode.dy+10.
     colors.domain(links, function(d) {
       //return d.source.group + d.source.name;
       return d.source.name;
@@ -540,34 +540,34 @@
       .attr("text-anchor", "start");
 
 
-    var src_individual = g.append("g").selectAll(".src_individual")
-      .data(filtered_source_individuals)
+    var srcIndividual = g.append("g").selectAll(".srcIndividual")
+      .data(filteredSourceIndividuals)
       .enter().append("g")
-      .attr("class", "src_individual")
+      .attr("class", "srcIndividual")
       .attr("transform", function(d) {
-        return "translate(" + (d.targeted_link.source.x - 1 * sankey.nodeWidth()) + "," + (d.targeted_link.source.y + d.targeted_link.sy) + ")";
+        return "translate(" + (d.targetedLink.source.x - 1 * sankey.nodeWidth()) + "," + (d.targetedLink.source.y + d.targetedLink.sy) + ")";
       });
 
-    src_individual.append("rect")
+    srcIndividual.append("rect")
       .attr("height", function(d) {
-        return d.targeted_link.dy / d.total_individuals;
+        return d.targetedLink.dy / d.totalIndividuals;
       })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) {
-        return d.community_offset * (d.targeted_link.dy / d.total_individuals);
+        return d.communityOffset * (d.targetedLink.dy / d.totalIndividuals);
       })
       .style("fill", function(d) {
-        //return colors()(d.targeted_link.source.group + d.targeted_link.source.name)
-        return colors()(d.targeted_link.source.name)
+        //return colors()(d.targetedLink.source.group + d.targetedLink.source.name)
+        return colors()(d.targetedLink.source.name)
       })
       .style("opacity", function(d) {
-        return name_to_opacity[d.name];
+        return nameToOpacity[d.name];
       });
 
-    src_individual.append("text")
+    srcIndividual.append("text")
       .attr("x", 3 + 2 * sankey.nodeWidth())
       .attr("y", function(d) {
-        return (d.community_offset + 1/2) * (d.targeted_link.dy / d.total_individuals);
+        return (d.communityOffset + 1/2) * (d.targetedLink.dy / d.totalIndividuals);
       })
       .attr("dy", ".35em")
       .attr("transform", null)
@@ -575,42 +575,42 @@
         return d.name;
       })
       .style("font-size", function(d) {
-        return Math.min(11, d.targeted_link.dy / (1.1 * d.total_individuals)) + "px";
+        return Math.min(11, d.targetedLink.dy / (1.1 * d.totalIndividuals)) + "px";
       })
       .style("font-family", "Arial, Helvetica")
       .style("pointer-events", "none")
       .attr("text-anchor", "start");
 
     // TODO: display on hover ?
-    var tgt_individual = g.append("g").selectAll(".tgt_individual")
-      .data(filtered_target_individuals)
+    var tgtIndividual = g.append("g").selectAll(".tgtIndividual")
+      .data(filteredTargetIndividuals)
       .enter().append("g")
-      .attr("class", "tgt_individual")
+      .attr("class", "tgtIndividual")
       .attr("transform", function(d) {
-        return "translate(" + (d.targeted_link.target.x + 1 * sankey.nodeWidth()) + "," + (d.targeted_link.target.y + d.targeted_link.ty) + ")";
+        return "translate(" + (d.targetedLink.target.x + 1 * sankey.nodeWidth()) + "," + (d.targetedLink.target.y + d.targetedLink.ty) + ")";
       });
     //        .style("hover text", function(d) {"display: block"});
 
-    tgt_individual.append("rect")
+    tgtIndividual.append("rect")
       .attr("height", function(d) {
-        return d.targeted_link.dy / d.total_individuals;
+        return d.targetedLink.dy / d.totalIndividuals;
       })
       .attr("width", sankey.nodeWidth())
       .attr("y", function(d) {
-        return d.community_offset * (d.targeted_link.dy / d.total_individuals);
+        return d.communityOffset * (d.targetedLink.dy / d.totalIndividuals);
       })
       .style("fill", function(d) {
-        //return colors()(d.targeted_link.target.group + d.targeted_link.target.name);
-        return colors()(d.targeted_link.target.name);
+        //return colors()(d.targetedLink.target.group + d.targetedLink.target.name);
+        return colors()(d.targetedLink.target.name);
       })
        .style("opacity", function(d) {
-        return name_to_opacity[d.name];
+        return nameToOpacity[d.name];
       });
 
-    tgt_individual.append("text")
+    tgtIndividual.append("text")
       .attr("x", -3 - sankey.nodeWidth())
       .attr("y", function(d) {
-        return (d.community_offset + 1/2) * (d.targeted_link.dy / d.total_individuals);
+        return (d.communityOffset + 1/2) * (d.targetedLink.dy / d.totalIndividuals);
       })
       .attr("dy", ".35em")
       .attr("text-anchor", "end")
@@ -619,13 +619,13 @@
         return d.name;
       })
       .style("font-size", function(d) {
-        return Math.min(11, d.targeted_link.dy / (1.1 * d.total_individuals)) + "px";
+        return Math.min(11, d.targetedLink.dy / (1.1 * d.totalIndividuals)) + "px";
       })
       .style("font-family", "Arial, Helvetica")
       .style("pointer-events", "none")
 
     var mosaic = g.append("g").selectAll(".mosaic")
-      .data(mosaic_array)
+      .data(mosaicArray)
       .enter().append("g")
       .attr("class", "mosaic")
       .attr("transform", function(d) {
