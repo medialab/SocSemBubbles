@@ -87,9 +87,10 @@
           // === CUSTOM ===
           var source_individuals_list = JSON.parse(t.values[0][individuals()[0]]);
           for (var offset_src in source_individuals_list) {
+            var ind_name = source_individuals_list[offset_src].name;
             var individual = {
               targeted_link: link,
-              name: source_individuals_list[offset_src].name,
+              name: ind_name,
               present: source_individuals_list[offset_src].present,
               community_offset: Number(offset_src),
               total_individuals: source_individuals_list.length
@@ -99,9 +100,10 @@
 
           var target_individuals_list = JSON.parse(t.values[0][individuals()[1]]);
           for (var offset_tgt in target_individuals_list) {
+            var ind_name = target_individuals_list[offset_tgt].name;
             var individual = {
               targeted_link: link,
-              name: target_individuals_list[offset_tgt].name,
+              name: ind_name,
               present: target_individuals_list[offset_tgt].present,
               community_offset: Number(offset_tgt),
               total_individuals: target_individuals_list.length
@@ -177,6 +179,14 @@
 
   var colors = chart.color()
     .title("Color scale")
+
+  var mosaicWidth = chart.number()
+    .title("Mosaic width")
+    .defaultValue(50)
+
+  var mosaicHeight = chart.number()
+    .title("Mosaic height")
+    .defaultValue(10)
 
   chart.draw(function(selection, data) {
 
@@ -369,14 +379,72 @@
       }
     }
 
-    //  Correct nodes x coordinate
+    // === Computing individuals' mosaic ===
+
+    var mosaic_dict = {};
+
+    source_array = [source_individuals, target_individuals]
+    target_key_array = ['target', 'source']
+    for (var src_offset in source_array) {
+      var src_ar = source_array[src_offset];
+      var target_node_offset = target_key_array[src_offset];
+      var source_node_offset = target_key_array[1-src_offset];
+      for (var offset in src_ar) {
+        var src_node = src_ar[offset];
+        if (!(src_node.name in mosaic_dict)) {
+          mosaic_dict[src_node.name] = {'sourceNode': src_node.targeted_link[source_node_offset], 'reachedTarget': {}, reachedTargetSize: 0}
+          for (var nested_offset in nodes) {
+            var current_node = nodes[nested_offset];
+            if (current_node.group === src_node.targeted_link[target_node_offset].group) {
+              mosaic_dict[src_node.name].reachedTarget[current_node.name] = false;
+              mosaic_dict[src_node.name].reachedTargetSize += 1;
+            }
+          }
+        }
+        if (src_node.present)
+          mosaic_dict[src_node.name].reachedTarget[src_node.targeted_link[target_node_offset].name] = true;
+      }
+    }
+    console.log(mosaic_dict);
+
+    mosaic_array = [];
+    perNodeYOffset = {};
+    for (var key in mosaic_dict) {
+      if (mosaic_dict.hasOwnProperty(key)) {
+
+        var sourceNodeName = mosaic_dict[key].sourceNode.name + mosaic_dict[key].sourceNode.group;
+        if (!(sourceNodeName in perNodeYOffset))
+          perNodeYOffset[sourceNodeName] = 0;
+
+        var reachedTargets = mosaic_dict[key].reachedTarget;
+        for (var reachedTargetKey in reachedTargets) {
+          if (reachedTargets.hasOwnProperty(reachedTargetKey)) {
+            var mosaic = {
+              'name': key,
+              'dy': perNodeYOffset[sourceNodeName],
+              'dx': Number(reachedTargetKey), // UGLY !
+              'present': reachedTargets[reachedTargetKey],
+              'sourceNode': mosaic_dict[key].sourceNode,
+              'targetSize': mosaic_dict[key].reachedTargetSize
+            };
+            mosaic_array.push(mosaic);
+          }
+        }
+        perNodeYOffset[sourceNodeName] += 1;
+      }
+    }
+    console.log(mosaic_array);
+    console.log(perNodeYOffset);
+
+  //  Correct nodes x coordinate
     for (var node_offset in nodes) {
       d = nodes[node_offset];
       if (d.x == 0)
-        d.x += 1 * sankey.nodeWidth();
+        d.x = d.x + 2 * sankey.nodeWidth() + mosaicWidth();
       else
-        d.x -= 1 * sankey.nodeWidth();
+        d.x = d.x - (2 * sankey.nodeWidth() + mosaicWidth());
     }
+
 
     // ==================================
 
@@ -417,7 +485,8 @@
       .style("fill", "none")
       .style("stroke", function(d) {
         //return /*"linear-gradient(to right, "+*/colors()(d.source.group + d.source.name)/*+", blue)"*/;
-        return "url(#"+d.source.name + d.target.name+")";
+        //return "url(#"+d.source.name + d.target.name+")";
+        return colors()(d.source.name);
       })
       .style("stroke-opacity", ".4")
       .sort(function(a, b) {
@@ -498,7 +567,7 @@
     src_individual.append("text")
       .attr("x", 3 + 2 * sankey.nodeWidth())
       .attr("y", function(d) {
-        return (d.community_offset) * (d.targeted_link.dy / d.total_individuals) + d.targeted_link.dy / (2 * d.total_individuals);
+        return (d.community_offset + 1/2) * (d.targeted_link.dy / d.total_individuals);
       })
       .attr("dy", ".35em")
       .attr("transform", null)
@@ -541,7 +610,7 @@
     tgt_individual.append("text")
       .attr("x", -3 - sankey.nodeWidth())
       .attr("y", function(d) {
-        return (d.community_offset) * (d.targeted_link.dy / d.total_individuals) + d.targeted_link.dy / (2 * d.total_individuals);
+        return (d.community_offset + 1/2) * (d.targeted_link.dy / d.total_individuals);
       })
       .attr("dy", ".35em")
       .attr("text-anchor", "end")
@@ -554,6 +623,62 @@
       })
       .style("font-family", "Arial, Helvetica")
       .style("pointer-events", "none")
+
+    var mosaic = g.append("g").selectAll(".mosaic")
+      .data(mosaic_array)
+      .enter().append("g")
+      .attr("class", "mosaic")
+      .attr("transform", function(d) {
+        var arg = "translate("+ (d.sourceNode.x + 3*sankey.nodeWidth()) + "," + d.sourceNode.y + ")";
+//        console.log(d.name);
+//        console.log(arg);
+        return arg;
+      });
+      var sourceMosaic = mosaic.filter(function(d) {
+//        console.log(d);
+//        console.log(d.sourceNode.x - (1*Number(sankey.nodeWidth()) + Number(mosaicWidth())), d.sourceNode.x + 1*Number(sankey.nodeWidth()));
+        return d.sourceNode.x < +width() / 2;
+      })
+      .attr("transform", function(d) {
+//        console.log(d.name);
+        return "translate("+ (d.sourceNode.x - 2*sankey.nodeWidth() - mosaicWidth()) + "," + d.sourceNode.y + ")";
+      });
+
+    mosaic.append("rect")
+    .attr("height", function(d) {
+      var boxHeight = d.sourceNode.dy/perNodeYOffset[d.sourceNode.name + d.sourceNode.group];
+      return Math.min(mosaicHeight(), boxHeight/2);
+    })
+    .attr("width", function (d) { return (mosaicWidth()/d.targetSize); })
+    .attr("y", function(d) {
+      return (d.dy /*+1/2*/)*(d.sourceNode.dy/(perNodeYOffset[d.sourceNode.name + d.sourceNode.group]))/* - Math.min(10, d.sourceNode.dy/perNodeYOffset[d.sourceNode.name + d.sourceNode.group])/2*/;
+     })
+    .attr("x", function(d) {
+      return d.dx*(mosaicWidth()/d.targetSize);
+    })
+    .style("fill", "AAA")
+    .style("opacity", function(d) {
+      return d.present ? 1 : 0.4;
+    });
+
+    mosaic.append("text")
+    .attr("y", function(d) {
+      var boxHeight = d.sourceNode.dy/perNodeYOffset[d.sourceNode.name + d.sourceNode.group];
+      var h = Math.min(mosaicHeight(), boxHeight/2);
+      return (d.dy)*(boxHeight) + 1.5*h;
+    })
+    .attr("dy", ".35em")
+    .attr("transform", null)
+    .text(function(d) {
+      return d.name;
+    })
+    .style("font-size", function(d) {
+      var boxHeight = d.sourceNode.dy/perNodeYOffset[d.sourceNode.name + d.sourceNode.group];
+      return Math.min(mosaicHeight(), boxHeight/2) + "px";
+    })
+    .style("font-family", "Arial, Helvetica")
+    .style("pointer-events", "none")
+    .attr("text-anchor", "start");
 
   })
 
