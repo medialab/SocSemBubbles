@@ -370,7 +370,7 @@
       for (var offset in srcAr) {
         var srcNode = srcAr[offset];
         if (!(srcNode.name in mosaicDict)) {
-          mosaicDict[srcNode.name] = {'sourceNode': srcNode.targetedLink[sourceNodeOffset], 'reachedTarget': {}, reachedTargetSize: 0}
+          mosaicDict[srcNode.name] = {'name':srcNode.name, 'sourceNode': srcNode.targetedLink[sourceNodeOffset], 'reachedTarget': {}, reachedTargetSize: 0}
           for (var nestedOffset in nodes) {
             var currentNode = nodes[nestedOffset];
             if (currentNode.group === srcNode.targetedLink[targetNodeOffset].group) {
@@ -383,10 +383,161 @@
           mosaicDict[srcNode.name].reachedTarget[srcNode.targetedLink[targetNodeOffset].name] = true;
       }
     }
+
+    // === Initialisation of mosaic sorting ===
+    var mosaicKeyArrayByGroup = {};
+    var todoStack = [];
+    var somethingHappenedByGroup = {};
+    var firstPushedIndividualByGroup = {};
+    for (var key in mosaicDict) {
+      if (mosaicDict.hasOwnProperty(key)) {
+        todoStack.push(mosaicDict[key]);
+        somethingHappenedByGroup[mosaicDict[key].sourceNode.group] = true;
+        firstPushedIndividualByGroup[mosaicDict[key].sourceNode.group] = null;
+      }
+    }
+    //console.log(todoStack);
+    // === Effective sorting ===
+    // TODO: check if we're doing a complete todoStack repushing.
+    // If so, push a random one, and reiterate (as they are
+    // completely disjoint from current sorted shit,
+    // we don't care about unshifting or pushing).
+    while (todoStack.length !== 0) {
+      var currentIndividual = todoStack.shift();
+      var currentGroup = currentIndividual.sourceNode.group;
+      var stackCycle = (currentIndividual === firstPushedIndividualByGroup[currentGroup] && !somethingHappenedByGroup[currentGroup]);
+      //console.log(mosaicKeyArrayByGroup);
+      if (stackCycle) {
+        // This individual isn't aligned with anything since we've done
+        // a complete no-op stack cycle, so no-brain pushing
+        mosaicKeyArrayByGroup[currentGroup].push(currentIndividual.name);
+        // Resetting variables detecting a no-op stack cycle
+        somethingHappenedByGroup[currentGroup] = true;
+        firstPushedIndividualByGroup[currentGroup] = null;
+      }
+
+      else {
+        if (!(currentGroup in mosaicKeyArrayByGroup)) {
+          mosaicKeyArrayByGroup[currentGroup] = [currentIndividual.name];
+          somethingHappenedByGroup[currentGroup] = true;
+        }
+
+        else if (mosaicKeyArrayByGroup[currentGroup].length === 1) {
+          mosaicKeyArrayByGroup[currentGroup].push(currentIndividual.name);
+          somethingHappenedByGroup[currentGroup] = true;
+        }
+
+        else {
+          var maxJaccardAlignmentValue = 0;
+          var maxJaccardAlignmentIndividualIndex = -1;
+          // Jaccard alignement
+          for (var alignedIndividualsOffset in mosaicKeyArrayByGroup[currentGroup]) {
+            //console.log(mosaicKeyArrayByGroup[currentGroup][alignedIndividualsOffset]);
+            var currentAlignedIndividual = mosaicDict[mosaicKeyArrayByGroup[currentGroup][alignedIndividualsOffset]];
+            //console.log(currentAlignedIndividual);
+            var intersectionCount = 0;
+            var unionCount = 0;
+            for (var reachedTargetKey in currentIndividual.reachedTarget) {
+              if (currentIndividual.reachedTarget.hasOwnProperty(reachedTargetKey)) {
+                if (currentIndividual.reachedTarget[reachedTargetKey]
+                && currentAlignedIndividual.reachedTarget[reachedTargetKey])
+                  ++intersectionCount;
+                if (currentIndividual.reachedTarget[reachedTargetKey]
+                || currentAlignedIndividual.reachedTarget[reachedTargetKey])
+                  ++unionCount;
+              }
+            }
+            var currentJaccardValue = unionCount ? intersectionCount/unionCount: 0;
+            if (currentJaccardValue > maxJaccardAlignmentValue) {
+              maxJaccardAlignmentValue = currentJaccardValue;
+              maxJaccardAlignmentIndividualIndex = Number(alignedIndividualsOffset);
+            }
+          }
+          if (!maxJaccardAlignmentValue) { // Maybe we will be lucky next time
+            todoStack.push(currentIndividual);
+            if (firstPushedIndividualByGroup[currentGroup] === null) {
+              firstPushedIndividualByGroup[currentGroup] = currentIndividual;
+              somethingHappenedByGroup[currentGroup] = false;
+            }
+          }
+
+          else if (maxJaccardAlignmentIndividualIndex === 0) {
+            // don't care, unshift
+            mosaicKeyArrayByGroup[currentGroup].unshift(currentIndividual.name);
+            somethingHappenedByGroup[currentGroup] = true;
+          }
+
+          else if (maxJaccardAlignmentIndividualIndex === mosaicKeyArrayByGroup[currentGroup].length-1) {
+            mosaicKeyArrayByGroup[currentGroup].push(currentIndividual.name);
+            somethingHappenedByGroup[currentGroup] = true;
+          }
+
+          else {
+            // Compare the two neighboors
+            //upperNeighboor
+            //console.log(maxJaccardAlignmentIndividualIndex);
+            var neighboorsIndexArray = [maxJaccardAlignmentIndividualIndex-1, maxJaccardAlignmentIndividualIndex+1];
+            var neighboorIntersectionCount = 0;
+            var neighboorUnionCount = 0;
+            var resultValue = [];
+            for (var neighboorsIndexArrayIndex in neighboorsIndexArray) {
+              var neighboorsIndex = neighboorsIndexArray[neighboorsIndexArrayIndex];
+              //console.log(neighboorsIndex);
+              //console.log(mosaicKeyArrayByGroup[currentGroup][neighboorsIndex]);
+              var currentAlignedIndividual = mosaicDict[mosaicKeyArrayByGroup[currentGroup][neighboorsIndex]];
+              var intersectionCount = 0;
+              var unionCount = 0;
+              for (var reachedTargetKey in currentIndividual.reachedTarget) {
+                if (currentIndividual.reachedTarget.hasOwnProperty(reachedTargetKey)) {
+                  if (currentIndividual.reachedTarget[reachedTargetKey]
+                  && currentAlignedIndividual.reachedTarget[reachedTargetKey])
+                    ++intersectionCount;
+                  if (currentIndividual.reachedTarget[reachedTargetKey]
+                  || currentAlignedIndividual.reachedTarget[reachedTargetKey])
+                    ++unionCount;
+                }
+                resultValue.push(unionCount ? intersectionCount/unionCount : 0);
+              }
+            }
+            var spliceOffset = resultValue[1] > resultValue[0] ? 1 : 0;
+            mosaicKeyArrayByGroup[currentGroup].splice(maxJaccardAlignmentIndividualIndex+spliceOffset, 0, currentIndividual.name);
+            somethingHappenedByGroup[currentGroup] = true;
+          }
+        }
+      }
+    }
+
     console.log(mosaicDict);
 
     mosaicArray = [];
     perNodeYOffset = {};
+    for (var group in mosaicKeyArrayByGroup) {
+      if (mosaicKeyArrayByGroup.hasOwnProperty(group)) {
+        for (var individualNameIndex in mosaicKeyArrayByGroup[group]) {
+          var key = mosaicKeyArrayByGroup[group][individualNameIndex];
+          var sourceNodeName = mosaicDict[key].sourceNode.name + mosaicDict[key].sourceNode.group;
+          if (!(sourceNodeName in perNodeYOffset))
+            perNodeYOffset[sourceNodeName] = 0;
+
+          var reachedTargets = mosaicDict[key].reachedTarget;
+          for (var reachedTargetKey in reachedTargets) {
+            if (reachedTargets.hasOwnProperty(reachedTargetKey)) {
+              var mosaic = {
+                'name': key,
+                'dy': perNodeYOffset[sourceNodeName],
+                'dx': Number(reachedTargetKey), // UGLY !
+                'present': reachedTargets[reachedTargetKey],
+                'sourceNode': mosaicDict[key].sourceNode,
+                'targetSize': mosaicDict[key].reachedTargetSize
+              };
+              mosaicArray.push(mosaic);
+            }
+          }
+          perNodeYOffset[sourceNodeName] += 1;
+        }
+      }
+    }
+    /*
     for (var key in mosaicDict) {
       if (mosaicDict.hasOwnProperty(key)) {
 
@@ -411,6 +562,7 @@
         perNodeYOffset[sourceNodeName] += 1;
       }
     }
+    */
     console.log(mosaicArray);
     console.log(perNodeYOffset);
 
