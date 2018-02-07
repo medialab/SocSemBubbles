@@ -391,12 +391,30 @@
     var firstPushedIndividualByGroup = {};
     for (var key in mosaicDict) {
       if (mosaicDict.hasOwnProperty(key)) {
+        var groupKey = mosaicDict[key].sourceNode.group + mosaicDict[key].sourceNode.name;
         todoStack.push(mosaicDict[key]);
-        somethingHappenedByGroup[mosaicDict[key].sourceNode.group] = true;
-        firstPushedIndividualByGroup[mosaicDict[key].sourceNode.group] = null;
+        somethingHappenedByGroup[groupKey] = true;
+        firstPushedIndividualByGroup[groupKey] = null;
       }
     }
-    //console.log(todoStack);
+    todoStack.sort(function (a, b) {
+      var aReachedCount = 0;
+      var bReachedCount = 0;
+
+      for (var k in a.reachedTarget)
+        if (a.reachedTarget.hasOwnProperty(k))
+          if (a.reachedTarget[k])
+            ++aReachedCount;
+
+      for (var k in b.reachedTarget)
+        if (b.reachedTarget.hasOwnProperty(k))
+          if (b.reachedTarget[k])
+            ++bReachedCount;
+
+      return bReachedCount - aReachedCount;
+    });
+    console.log(todoStack);
+    // DEBUG: todoStack is correctly sorted
     // === Effective sorting ===
     // TODO: check if we're doing a complete todoStack repushing.
     // If so, push a random one, and reiterate (as they are
@@ -404,7 +422,9 @@
     // we don't care about unshifting or pushing).
     while (todoStack.length !== 0) {
       var currentIndividual = todoStack.shift();
-      var currentGroup = currentIndividual.sourceNode.group;
+      console.log(currentIndividual);
+      console.log(mosaicKeyArrayByGroup);
+      var currentGroup = currentIndividual.sourceNode.group + currentIndividual.sourceNode.name;
       var stackCycle = (currentIndividual === firstPushedIndividualByGroup[currentGroup] && !somethingHappenedByGroup[currentGroup]);
       //console.log(mosaicKeyArrayByGroup);
       if (stackCycle) {
@@ -429,7 +449,10 @@
 
         else {
           var maxJaccardAlignmentValue = 0;
-          var maxJaccardAlignmentIndividualIndex = -1;
+          // Here upper and lower means a "stack-geometric" up and down:
+          // 0 is he uppest, length-1 the lowest
+          var maxJaccardAlignmentIndividualUpperIndex;
+          var maxJaccardAlignmentIndividualLowerIndex;
           // Jaccard alignement
           for (var alignedIndividualsOffset in mosaicKeyArrayByGroup[currentGroup]) {
             //console.log(mosaicKeyArrayByGroup[currentGroup][alignedIndividualsOffset]);
@@ -448,11 +471,15 @@
               }
             }
             var currentJaccardValue = unionCount ? intersectionCount/unionCount: 0;
-            if (currentJaccardValue > maxJaccardAlignmentValue) {
+            if (currentJaccardValue >= maxJaccardAlignmentValue) {
+              maxJaccardAlignmentIndividualLowerIndex = Number(alignedIndividualsOffset);
+              maxJaccardAlignmentIndividualUpperIndex = currentJaccardValue > maxJaccardAlignmentValue ?
+                maxJaccardAlignmentIndividualLowerIndex : maxJaccardAlignmentIndividualUpperIndex;
               maxJaccardAlignmentValue = currentJaccardValue;
-              maxJaccardAlignmentIndividualIndex = Number(alignedIndividualsOffset);
             }
           }
+          if (currentGroup === 'Concept_target0')
+            console.log(maxJaccardAlignmentIndividualIndex, currentIndividual.name, mosaicKeyArrayByGroup[currentGroup][maxJaccardAlignmentIndividualIndex]);
           if (!maxJaccardAlignmentValue) { // Maybe we will be lucky next time
             todoStack.push(currentIndividual);
             if (firstPushedIndividualByGroup[currentGroup] === null) {
@@ -461,22 +488,25 @@
             }
           }
 
-          else if (maxJaccardAlignmentIndividualIndex === 0) {
+          else if (maxJaccardAlignmentIndividualUpperIndex === 0) {
             // don't care, unshift
             mosaicKeyArrayByGroup[currentGroup].unshift(currentIndividual.name);
             somethingHappenedByGroup[currentGroup] = true;
           }
 
-          else if (maxJaccardAlignmentIndividualIndex === mosaicKeyArrayByGroup[currentGroup].length-1) {
+          else if (maxJaccardAlignmentIndividualLowerIndex === mosaicKeyArrayByGroup[currentGroup].length-1) {
             mosaicKeyArrayByGroup[currentGroup].push(currentIndividual.name);
             somethingHappenedByGroup[currentGroup] = true;
           }
 
           else {
+            // !!! HACKY !!!
+            var maxJaccardAlignmentIndividualIndex = maxJaccardAlignmentIndividualUpperIndex;
             // Compare the two neighboors
             //upperNeighboor
             //console.log(maxJaccardAlignmentIndividualIndex);
             var neighboorsIndexArray = [maxJaccardAlignmentIndividualIndex-1, maxJaccardAlignmentIndividualIndex+1];
+            console.log(neighboorsIndexArray);
             var neighboorIntersectionCount = 0;
             var neighboorUnionCount = 0;
             var resultValue = [];
