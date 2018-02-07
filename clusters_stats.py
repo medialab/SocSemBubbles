@@ -334,20 +334,42 @@ if __name__ == "__main__":
         binocular_datastructure = json.load(f)
 
         # Draw the actors and concept graphs (used for Louvain community detection)
+        # + bipartite graph
+        bipartite_graph = nx.Graph()
         concepts_graph = nx.Graph()
         for concept, item in binocular_datastructure['concepts'].items():
             concepts_graph.add_node(concept, freq=item['frequency'])
+            bipartite_graph.add_node(concept, freq=item['frequency'])
             for target_concept, w in binocular_datastructure['cc'][concept].items():
                 concepts_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
+                bipartite_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
 
         actors_graph = nx.Graph()
         for actor, item in binocular_datastructure['actors'].items():
             actors_graph.add_node(actor, freq=item['frequency'])
+            bipartite_graph.add_node(actor, freq=item['frequency'])
             for target_actor, w in binocular_datastructure['aa'][actor].items():
                 actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
+                bipartite_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
+
+        for actor, concept_dict in binocular_datastructure['ac'].items():
+            for concept, w in concept_dict.items():
+                bipartite_graph.add_edge(actor, concept, weight=w)
 
         final_concept_communities = generate_core_communities(concepts_graph, 1000, 95/100)
         final_actor_communities = generate_core_communities(actors_graph, 1000, 95/100)
+
+        node_community_dict = {}
+        for community_key, node_set in final_concept_communities.items():
+            for node in node_set:
+                node_community_dict[node] = 'c'+str(community_key)
+
+        for community_key, node_set in final_actor_communities.items():
+            for node in node_set:
+                node_community_dict[node] = 'a'+str(community_key)
+
+        nx.set_node_attributes(bipartite_graph, name='python_modularity_class', values=node_community_dict)
+        #nx.write_gexf(bipartite_graph, sys.argv[2])
 
         print(final_concept_communities, len([concept for key, item in final_concept_communities.items() for concept in item]), '/', len(binocular_datastructure['concepts']))
         print(final_actor_communities, len([actor for key, item in final_actor_communities.items() for actor in item]), '/', len(binocular_datastructure['actors']))
