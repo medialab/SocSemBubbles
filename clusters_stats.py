@@ -214,7 +214,7 @@ def null_model_expected_value_for_node(total_target_nodes_count, total_node_link
 ### Fingerprint ###
 
 def hhi(values_list):
-    """Compute the Herfindahl index of values."""
+    """Compute the Herfindahl–Hirschman Index of values provided by argument."""
     total = sum(values_list)
     h = 0
     for S in values_list:
