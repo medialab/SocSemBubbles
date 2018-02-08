@@ -6,7 +6,6 @@ from math import ceil
 from math import floor
 from math import exp
 from math import sqrt
-import random
 
 ### Format conversion ###
 
@@ -329,7 +328,6 @@ def generate_core_communities(graph, samples_number, confidence_threshold = 95/1
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
-    random.seed()
     with open(sys.argv[1], 'r') as f:
         binocular_datastructure = json.load(f)
 
