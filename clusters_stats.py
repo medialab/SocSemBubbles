@@ -214,6 +214,7 @@ def null_model_expected_value_for_node(total_target_nodes_count, total_node_link
 ### Fingerprint ###
 
 def hhi(values_list):
+    """Compute the Herfindahl index of values."""
     total = sum(values_list)
     h = 0
     for S in values_list:
@@ -221,6 +222,7 @@ def hhi(values_list):
     return h
 
 def get_relevant_fingerprints(nodes_fingerprint):
+    """Get the most important links by using discretized Herfindahl index."""
     relevant_fingerprints = {}
     for node_key, node_fing_dict in nodes_fingerprint.items():
         relevant_fingerprints[node_key] = {}
