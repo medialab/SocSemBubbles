@@ -169,20 +169,6 @@ def fuse_core_communities(bootstraps_list, confidence_threshold):
 
 ### Communities diversity ###
 
-def get_basic_communities_diversity(source_communities, target_communities, one_to_two_nodes_edges_dict):
-    """Basic metric: count how many target communities are linked to a source community,
-    for each source community.
-    """
-    communities_links = {}
-    target_partition = get_partitions_from_communities(target_communities)
-    for community, node_set in source_communities.items():
-        communities_links[community] = set()
-        for node in node_set:
-            for target_node in one_to_two_nodes_edges_dict[node]:
-                if target_node in target_partition:
-                    communities_links[community].add(target_partition[target_node])
-    return communities_links
-
 def get_nodes_distribution(source_to_target_node_links, source_core_communities, target_core_communities):
     """Returns dict keyed by node conveying target community's clusters connection."""
     nodes_links = {}
@@ -267,36 +253,6 @@ def nodes_distribution_fingerprint(total_target_nodes_count, nodes_distribution,
             nodes_fingerprint[node_key][community_key] = community_freq / null_model_freq[community_key]
 
     return nodes_fingerprint
-
-def median_with_geometric_interpolation(l):
-    """Naive implementation of 'geometric' median (aka median with geometric mean
-    interpolation in case of an even-numbered list size).
-    Different from the mathematical geometric median (which is basically multidimensionnal median).
-    """
-    # Naive implementation, because we do not (yet) need something clever
-    tmp = sorted(l)
-    size = len(tmp)
-    if size % 2 == 1:
-        return tmp[floor(size/2)]
-    else:
-        return sqrt(tmp[size//2-1]*tmp[size//2])
-
-def communities_distribution_by_median(nodes_fingerprint, source_communities):
-    """Compute source communities fingerprint by taking its nodes' median for each
-    target community (the ones which are fingerprinted).
-    """
-    communities_median_distribution = {}
-    for community_id, nodes_list in source_communities.items():
-        communities_median_distribution[community_id] = {}
-        for node in nodes_list:
-            for target_community_key, target_community_value in nodes_fingerprint[node].items():
-                if target_community_key not in communities_median_distribution[community_id]:
-                    communities_median_distribution[community_id][target_community_key] = [target_community_value]
-                else:
-                    communities_median_distribution[community_id][target_community_key].append(target_community_value)
-        for target_community_key in communities_median_distribution[community_id].keys():
-            communities_median_distribution[community_id][target_community_key] = median_with_geometric_interpolation(communities_median_distribution[community_id][target_community_key])
-    return communities_median_distribution
 
 def communities_distribution_by_overall_fingerprint(total_target_nodes_count, nodes_distribution, source_core_communities, target_core_communities):
     """Compute each source communities fingerprint by grouping all its nodes' links into a virtual
