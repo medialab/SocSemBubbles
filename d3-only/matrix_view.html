@@ -1,0 +1,51 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<script type="text/javascript" src="d3.js"></script>
+<body>
+<div id="v"></div>
+<script type="text/javascript">
+//(function() {
+console.log('ble');
+  var matrix = [
+  [ 0,  1,  2,  3],
+  [ 4,  5,  6,  7],
+  [ 8,  9, 10, 11],
+  [12, 13, 14, 15],
+  ];
+  var squareSize = 10;
+  var squarePadding = 3;
+  var width = 800;
+  var height = 800;
+  var selection = d3.select("#v").append("svg:svg");
+  var g = selection
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + 0 + "," + 10 + ")");
+
+//  var lineCount = 0;
+  var squareLine = g.selectAll(".linkLine")
+  .data(matrix).enter()
+  .append("g")
+  .attr("class", "linkLine")
+  .attr("transform", function(d, i) { console.log('blah'); return "translate(" + "0," + i*(squarePadding+squareSize) + ")";})
+  .selectAll(".linkPoint")
+  .data(function(d, i) { return d; }).enter()
+  .append("rect")
+  .attr("class", "linkPoint")
+  .attr("height", squareSize)
+  .attr("width", squareSize)
+  .attr("x", function(d, i) { return i*(squarePadding+squareSize)})
+  .attr("y", 0)
+  .style("fill", "AAA"); // d is matrix[i]
+  //.enter().append("g")
+  //.attr("transform", "translate(" + (squarePadding + squareSize)*lineCount++ + "," + 0 + ")")
+  //.attr("class", "linkLine");
+  //var squarePoint = squareLine.
+  
+
+//})();
+</script>
+</body>
+</html>
