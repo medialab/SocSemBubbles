@@ -5,8 +5,7 @@
 <body>
 <div id="v"></div>
 <script type="text/javascript">
-//(function() {
-console.log('ble');
+(function() {
   var matrix = [
   [ 0,  1,  2,  3],
   [ 4,  5,  6,  7],
@@ -24,12 +23,11 @@ console.log('ble');
     .append("g")
     .attr("transform", "translate(" + 0 + "," + 10 + ")");
 
-//  var lineCount = 0;
   var squareLine = g.selectAll(".linkLine")
   .data(matrix).enter()
   .append("g")
   .attr("class", "linkLine")
-  .attr("transform", function(d, i) { console.log('blah'); return "translate(" + "0," + i*(squarePadding+squareSize) + ")";})
+  .attr("transform", function(d, i) { return "translate(" + "0," + i*(squarePadding+squareSize) + ")";})
   .selectAll(".linkPoint")
   .data(function(d, i) { return d; }).enter()
   .append("rect")
@@ -39,13 +37,7 @@ console.log('ble');
   .attr("x", function(d, i) { return i*(squarePadding+squareSize)})
   .attr("y", 0)
   .style("fill", "AAA"); // d is matrix[i]
-  //.enter().append("g")
-  //.attr("transform", "translate(" + (squarePadding + squareSize)*lineCount++ + "," + 0 + ")")
-  //.attr("class", "linkLine");
-  //var squarePoint = squareLine.
-  
-
-//})();
+})();
 </script>
 </body>
 </html>
