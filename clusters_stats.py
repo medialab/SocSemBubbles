@@ -296,17 +296,19 @@ if __name__ == "__main__":
         for concept, item in binocular_datastructure['concepts'].items():
             concepts_graph.add_node(concept, freq=item['frequency'])
             bipartite_graph.add_node(concept, freq=item['frequency'])
-            for target_concept, w in binocular_datastructure['cc'][concept].items():
-                concepts_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
-                bipartite_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
+            if concept in binocular_datastructure['cc']:
+                for target_concept, w in binocular_datastructure['cc'][concept].items():
+                    concepts_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
+                    bipartite_graph.add_edge(min(concept, target_concept), max(concept, target_concept), weight=w)
 
         actors_graph = nx.Graph()
         for actor, item in binocular_datastructure['actors'].items():
             actors_graph.add_node(actor, freq=item['frequency'])
             bipartite_graph.add_node(actor, freq=item['frequency'])
-            for target_actor, w in binocular_datastructure['aa'][actor].items():
-                actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
-                bipartite_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
+            if actor in binocular_datastructure['aa']:
+                for target_actor, w in binocular_datastructure['aa'][actor].items():
+                    actors_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
+                    bipartite_graph.add_edge(min(actor, target_actor), max(actor, target_actor), weight=w)
 
         for actor, concept_dict in binocular_datastructure['ac'].items():
             for concept, w in concept_dict.items():
