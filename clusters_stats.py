@@ -253,8 +253,8 @@ def generate_core_communities(graph, samples_number, confidence_threshold = 95/1
     return fuse_core_communities(original_communities, confidence_threshold)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 4:
-        sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [semantic GEXF] [socio GEXF]')
+    if len(sys.argv) < 3:
+        sys.exit("USAGE : " + sys.argv[0] + '[srcBinocularsJSON] [variable arguments]')
     with open(sys.argv[1], 'r') as f:
         binocular_datastructure = json.load(f)
 
