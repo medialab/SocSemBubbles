@@ -31,45 +31,6 @@ def get_partitions_from_communities(communities_dict):
 def jaccard_index(first_set, second_set):
     return len(first_set & second_set)/len(first_set | second_set)
 
-def get_core_communities_from_two(first_communities, second_communities):
-    """Get core communities from two community sets (on the same graph).
-    Smallest comunities are kept: clusters including others split.
-    """
-    core_communities = {}
-    map_first_to_second = {}
-    core_key = 0
-
-    # Strategy:
-    # Align communities by sameness metric (currently Jaccard Index) if there is no inclusion so far.
-    # If we detect community inclusion, we keep the smallest communities,
-    # consequently larger clusters are splitted.
-    for key_first, set_first in first_communities.items():
-        max_alignment_value = 0
-        max_alignment_key = -1
-        working_set = set_first.copy()
-        for key_second, set_second in second_communities.items():
-            if set_second.issubset(working_set):
-                # First cluster is larger than second: eviction of the subset
-                working_set -= set_second
-                # ... and keep smallest cluster at the end
-                core_communities[core_key] = set_second
-                core_key += 1
-
-            else:
-                alignment = jaccard_index(working_set, set_second)
-                if alignment > max_alignment_value:
-                    max_alignment_value = alignment
-                    max_alignment_key = key_second
-
-        if max_alignment_value > 0 :
-            map_first_to_second[key_first] = max_alignment_key
-
-    for key_first, key_second in map_first_to_second.items():
-         core_communities[core_key] = first_communities[key_first] & second_communities[key_second]
-         core_key += 1
-
-    return core_communities
-
 def align_bootstraps(bootstraps_list, bootstrap_index):
     """Return boostraps alignment (and their intersection set)."""
     smaller_community_anchor = False
