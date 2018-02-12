@@ -386,18 +386,18 @@
 
     // === Initialisation of mosaic sorting ===
     var mosaicKeyArrayByGroup = {};
-    var todoStack = [];
+    var todoFIFO = [];
     var somethingHappenedByGroup = {};
     var firstPushedIndividualByGroup = {};
     for (var key in mosaicDict) {
       if (mosaicDict.hasOwnProperty(key)) {
         var groupKey = mosaicDict[key].sourceNode.group + mosaicDict[key].sourceNode.name;
-        todoStack.push(mosaicDict[key]);
+        todoFIFO.push(mosaicDict[key]);
         somethingHappenedByGroup[groupKey] = true;
         firstPushedIndividualByGroup[groupKey] = null;
       }
     }
-    todoStack.sort(function (a, b) {
+    todoFIFO.sort(function (a, b) {
       var aReachedCount = 0;
       var bReachedCount = 0;
 
@@ -413,15 +413,15 @@
 
       return bReachedCount - aReachedCount;
     });
-    console.log(todoStack);
-    // DEBUG: todoStack is correctly sorted
+    console.log(todoFIFO);
+    // DEBUG: todoFIFO is correctly sorted
     // === Effective sorting ===
-    // TODO: check if we're doing a complete todoStack repushing.
+    // TODO: check if we're doing a complete todoFIFO repushing.
     // If so, push a random one, and reiterate (as they are
     // completely disjoint from current sorted shit,
     // we don't care about unshifting or pushing).
-    while (todoStack.length !== 0) {
-      var currentIndividual = todoStack.shift();
+    while (todoFIFO.length !== 0) {
+      var currentIndividual = todoFIFO.shift();
       console.log(currentIndividual);
       console.log(mosaicKeyArrayByGroup);
       var currentGroup = currentIndividual.sourceNode.group + currentIndividual.sourceNode.name;
@@ -481,7 +481,7 @@
           if (currentGroup === 'Concept_target0')
             console.log(maxJaccardAlignmentIndividualIndex, currentIndividual.name, mosaicKeyArrayByGroup[currentGroup][maxJaccardAlignmentIndividualIndex]);
           if (!maxJaccardAlignmentValue) { // Maybe we will be lucky next time
-            todoStack.push(currentIndividual);
+            todoFIFO.push(currentIndividual);
             if (firstPushedIndividualByGroup[currentGroup] === null) {
               firstPushedIndividualByGroup[currentGroup] = currentIndividual;
               somethingHappenedByGroup[currentGroup] = false;
