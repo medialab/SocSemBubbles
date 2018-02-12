@@ -193,6 +193,14 @@ def get_relevant_fingerprints(nodes_fingerprint):
         relevant_number = max(1, floor(1/h))
         sorted_fingerprints = sorted(fingerprint_list, key=itemgetter('value'), reverse=True)
         relevant_fingerprints_list = sorted_fingerprints[:relevant_number]
+        index = relevant_number
+        value = relevant_fingerprints_list[-1]['value']
+        if index < len(sorted_fingerprints):
+            print(value, sorted_fingerprints[index])
+        while (index < len(sorted_fingerprints) and sorted_fingerprints[index]['value'] == value):
+            print(index, sorted_fingerprints[index])
+            relevant_fingerprints_list.append(sorted_fingerprints[index])
+            index += 1
         for fingerprint in relevant_fingerprints_list:
             fingerprint_key = fingerprint['key']
             fingerprint_value = fingerprint['value']
