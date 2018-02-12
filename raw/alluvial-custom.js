@@ -619,16 +619,16 @@
       return d.target.name;
     });
 
-    var ldefs = g.append("defs").selectAll(".def")
-      .data(links)
-      .enter().append("linearGradient")
-      .attr("id", function(d) {return d.source.name + d.target.name;});
-      ldefs.append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", function(d) { return colors()(/*d.source.group +*/ d.source.name); });
-      ldefs.append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", function(d) { return colors()(/*d.target.group + */d.target.name); })
+    //var ldefs = g.append("defs").selectAll(".def")
+    //  .data(links)
+    //  .enter().append("linearGradient")
+    //  .attr("id", function(d) {return d.source.name + d.target.name;});
+    //  ldefs.append("stop")
+    //  .attr("offset", "0%")
+    //  .attr("stop-color", function(d) { return colors()(/*d.source.group +*/ d.source.name); });
+    //  ldefs.append("stop")
+    //  .attr("offset", "100%")
+    //  .attr("stop-color", function(d) { return colors()(/*d.target.group + */d.target.name); })
 
     var link = g.append("g").selectAll(".link")
       .data(links)
