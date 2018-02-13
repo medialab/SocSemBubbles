@@ -21,22 +21,57 @@
     .attr("width", width)
     .attr("height", height)
     .append("g")
-    .attr("transform", "translate(" + 0 + "," + 10 + ")");
+    .attr("transform", "translate(" + 150 + "," + 150 + ")");
+
+  //var matrixGraph = g.append('g')
+  //  .attr('transform', 'translate(150, 150)')
+  //  .attr('class', 'matrixGraph');
 
   var squareLine = g.selectAll(".linkLine")
-  .data(matrix).enter()
-  .append("g")
-  .attr("class", "linkLine")
-  .attr("transform", function(d, i) { return "translate(" + "0," + i*(squarePadding+squareSize) + ")";})
-  .selectAll(".linkPoint")
-  .data(function(d, i) { return d; }).enter()
-  .append("rect")
-  .attr("class", "linkPoint")
-  .attr("height", squareSize)
-  .attr("width", squareSize)
-  .attr("x", function(d, i) { return i*(squarePadding+squareSize)})
-  .attr("y", 0)
-  .style("fill", "AAA"); // d is matrix[i]
+    .data(matrix).enter()
+    .append("g")
+    .attr("class", "linkLine")
+    .attr("transform", function(d, i) { return "translate(" + "0," + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ")";})
+    .attr("fill", function(d, i) { return interpolator(json.sources[i].community_category/json.total_source_communities)})
+    .selectAll(".linkPoint")
+    .data(function(d, i) { return d; }).enter()
+    .append("rect")
+    .attr("class", "linkPoint")
+    .attr("height", squareSize)
+    .attr("width", squareSize)
+    .attr("x", function(d, i) { return i*(squarePadding+squareSize) + json.targets[i].community_category*squarePadding;})
+    .attr("y", 0)
+    .attr("opacity", function(d, i) { return d ? 1 : 0.3;});
+  //.style("fill", function(d, i) { return  ;}); // d is matrix[i]
+
+  //var sourceGraph = g.append('g')
+  //  .attr('transform', 'translate(0, 150)')
+  //  .attr('class', 'sourceGraph');
+
+  var sourceNames = g.selectAll(".sourceName")
+    .data(json.sources).enter()
+    .append('text')
+    .attr('class', 'sourceName')
+    .attr('transform', function(d, i) { return 'rotate(0,0,' + ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding) + ')'; })
+    .text(function(d) { return d.node; })
+    .attr("y", function(d, i) { return ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding); })
+    .attr("x", -squarePadding)
+    .style("font-size", squareSize*4/5)
+    .attr("text-anchor", "end");
+
+  //var targetGraph = g.append('g')
+  //  .attr('transform', 'translate(150, 0)')
+  //  .attr('class', 'targetGraph');
+
+  var targetNames = g.selectAll(".targetName")
+    .data(json.targets).enter()
+    .append('text')
+    .attr('class', 'targetName')
+    .attr('transform', function(d, i) { return 'rotate(90,' + ((i+1/4)*(squarePadding+squareSize) + d.community_category*squarePadding) + ',0)'; })
+    .text(function(d) { return d.node; })
+    .attr("x", function(d, i) { return (i+1/4)*(squarePadding+squareSize) + (d.community_category - 1)*squarePadding; })
+    .style("font-size", squareSize*4/5)
+    .attr("text-anchor", "end");
 })();
 </script>
 </body>
