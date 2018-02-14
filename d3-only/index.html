@@ -1,0 +1,102 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<style type="text/css">
+body {
+  overflow: hidden;
+  margin: 0;
+  font-size: 14px;
+  font-family: "Helvetica Neue", Helvetica;
+}
+
+#v {
+/*  height: 80%;*/
+  width: 100%;
+  border:2px solid #000;
+  overflow-y: scroll;
+}
+</style>
+<body>
+<div id="v"></div>
+<script type="text/javascript">
+d3.json('matrix_delight_v3.json').then(function(json) {
+  var bloc_display = {};
+  for (var lineOffset in json['matrix']) {
+    for (var columnOffset in json['matrix'][lineOffset]) {
+      var currentBool = json['matrix'][lineOffset][columnOffset];
+      var sourceCategory = json['sources'][lineOffset].community_category;
+      var targetCategory = json['targets'][columnOffset].community_category;
+      var key = (""+sourceCategory) + ',' + (""+targetCategory);
+      if (key in bloc_display) {
+        bloc_display[key] = bloc_display[key] || currentBool;
+      }
+      else {
+        bloc_display[key] = false;
+      }
+    }
+  }
+  console.log(bloc_display);
+
+  var interpolator = d3.interpolateRgbBasis(d3.schemeDark2);
+  var matrix = json['matrix'];
+  var squareSize = 10;
+  var squarePadding = squareSize*1/3;
+  var width = 800;
+  var height = 800;
+  var selection = d3.select("#v").append("svg:svg");
+  var g = selection
+    .attr("width", width)
+    .attr("height", height)
+    .append("g")
+    .attr("transform", "translate(" + 150 + "," + 150 + ")");
+
+  var squareLine = g.selectAll(".linkLine")
+    .data(matrix).enter()
+    .append("g")
+    .attr("class", "linkLine")
+    .attr("transform", function(d, i) { return "translate(" + "0," + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ")";})
+    .attr("fill", function(d, i) { return interpolator(json.sources[i].community_category/json.total_source_communities)})
+    .selectAll(".linkPoint")
+    .data(function(d, i) {
+      return d;
+    }).enter()
+    .append("rect")
+    .attr("class", "linkPoint")
+    .attr("height", squareSize)
+    .attr("width", squareSize)
+    .attr("x", function(d, i) { return i*(squarePadding+squareSize) + json.targets[i].community_category*squarePadding;})
+    .attr("y", 0)
+    .attr("opacity", function(d, i, j) {
+      var k = Array.prototype.indexOf.call(j[i].parentNode.parentNode.childNodes,j[i].parentNode);
+      console.log(k);
+      var key = (''+json.sources[k].community_category) + ',' + (''+json.targets[i].community_category);
+      console.log(key);
+      return bloc_display[key] ? (d ? 1 : 0.3) : 0.05;
+    });
+  //.style("fill", function(d, i) { return  ;}); // d is matrix[i]
+
+  var sourceNames = g.selectAll(".sourceName")
+    .data(json.sources).enter()
+    .append('text')
+    .attr('class', 'sourceName')
+    .attr('transform', function(d, i) { return 'rotate(0,0,' + ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding) + ')'; })
+    .text(function(d) { return d.node; })
+    .attr("y", function(d, i) { return ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding); })
+    .attr("x", -squarePadding)
+    .style("font-size", squareSize*4/5)
+    .attr("text-anchor", "end");
+
+  var targetNames = g.selectAll(".targetName")
+    .data(json.targets).enter()
+    .append('text')
+    .attr('class', 'targetName')
+    .attr('transform', function(d, i) { return 'rotate(90,' + ((i+1/4)*(squarePadding+squareSize) + d.community_category*squarePadding) + ',0)'; })
+    .text(function(d) { return d.node; })
+    .attr("x", function(d, i) { return (i+1/4)*(squarePadding+squareSize) + (d.community_category - 1)*squarePadding; })
+    .style("font-size", squareSize*4/5)
+    .attr("text-anchor", "end");
+});
+</script>
+</body>
+</html>
