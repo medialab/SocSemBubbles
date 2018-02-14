@@ -12,3 +12,8 @@ times and fusing the results.
 
 This Javascript code is actually a RawGraphs' alluvial chart with things added.
 The produced visualisation is not readable, so useless.
+
+### d3-only/matrix_view.html
+
+Javascript d3 code to generate a colored and communities grouped adjacency
+matrix visualisation.
