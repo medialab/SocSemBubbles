@@ -51,8 +51,6 @@ def align_bootstraps(bootstraps_list, bootstrap_index):
                 max_alignment_value = 0
                 max_alignment_key = -1
                 for community_key, community_set in bootstrap.items():
-                    #print(community_set)
-                    #print(current_community_anchor_set)
                     if community_set.issubset(current_community_anchor_set) and community_set != current_community_anchor_set: # Redo it with the smaller one
                         within_boostrap_community_index = community_key
                         bootstrap_index = b_index
@@ -241,7 +239,6 @@ def communities_distribution_by_overall_fingerprint(total_target_nodes_count, no
                     communities_distribution[community_key]['core_distribution'][target_community_key] = target_community_key_weight
                 else:
                     communities_distribution[community_key]['core_distribution'][target_community_key] += target_community_key_weight
-    #print(communities_fingerprint)
     return nodes_distribution_fingerprint(total_target_nodes_count, communities_distribution, target_core_communities)
 
 
