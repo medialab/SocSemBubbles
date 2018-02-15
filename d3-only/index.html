@@ -38,6 +38,111 @@ d3.json('matrix_delight_v3.json').then(function(json) {
   }
   console.log(bloc_display);
 
+  var sourcesExtent = [];
+  var targetsIntent = [];
+
+  for (var sourceOffset in json['matrix']) {
+    var sourceNumeric = Number(sourceOffset);
+    if (sourceNumeric >= sourcesExtent.length)
+      sourcesExtent.push(0);
+    for (var targetOffset in json['matrix'][sourceOffset]) {
+      var target_numeric = Number(targetOffset);
+      if (target_numeric >= targetsIntent.length)
+        targetsIntent.push(0);
+      var currentBool = json['matrix'][sourceOffset][targetOffset];
+      if (currentBool) {
+        sourcesExtent[sourceNumeric] += 1;
+        targetsIntent[target_numeric] += 1;
+      }
+    }
+  }
+
+  console.log(sourcesExtent, targetsIntent);
+
+  var sourceCommunityExtent = [];
+  var oldCommunity = null;
+  var communityExtentSum = 0;
+  for (var sourceOffset in json['sources']) {
+    var currentCommunity = json['sources'][sourceOffset].community_category;
+    if (currentCommunity != oldCommunity) {
+      if (oldCommunity != null)
+        sourceCommunityExtent.push(communityExtentSum);
+      communityExtentSum = sourcesExtent[sourceOffset];
+    }
+    else
+      communityExtentSum += sourcesExtent[sourceOffset];
+    oldCommunity = currentCommunity;
+  }
+  sourceCommunityExtent.push(communityExtentSum);
+  console.log(sourceCommunityExtent);
+
+  var targetCommunityIntent = [];
+  oldCommunity = null
+  var communityIntentSum = 0
+
+  for (var targetOffset in json['targets']) {
+    var currentCommunity = json['targets'][targetOffset].community_category;
+    if (currentCommunity != oldCommunity) {
+      if (oldCommunity != null)
+        targetCommunityIntent.push(communityIntentSum);
+      communityIntentSum = targetsIntent[targetOffset];
+    }
+    else
+      communityIntentSum += targetsIntent[targetOffset];
+    oldCommunity = currentCommunity;
+  }
+  targetCommunityIntent.push(communityIntentSum);
+  console.log(targetCommunityIntent);
+
+
+  var sourceCommunitySize = [];
+  var targetCommunitySize = [];
+  var oldD = null;
+  var sourceCount = null;
+  for (var sourceOffset in json['sources']) {
+    var d = json['sources'][sourceOffset].community_category;
+    if (d != oldD) {
+      if (oldD != null)
+        sourceCommunitySize.push(sourceCount);
+      sourceCount = 1;
+    }
+    else
+      sourceCount += 1;
+    oldD = d;
+  }
+  // We never push the last community count within the for loop
+  sourceCommunitySize.push(sourceCount);
+
+  oldD = null;
+  var targetCount = null
+  for (var targetOffset in json['targets']) {
+    var d = json['targets'][targetOffset].community_category;
+    if (d != oldD) {
+      if (oldD != null)
+        targetCommunitySize.push(targetCount);
+      targetCount = 1;
+    }
+    else
+      targetCount += 1;
+    oldD = d;
+  }
+  // We never push the last community count within the for loop
+  targetCommunitySize.push(targetCount);
+  
+  console.log(sourceCommunitySize, targetCommunitySize);
+
+  var separationMatrix = [];
+  for (var sourceOffset in sourceCommunitySize) {
+    separationMatrix.push([]);
+    for (var targetOffset in targetCommunitySize) {
+      var lengthProduct = sourceCommunitySize[sourceOffset]*targetCommunitySize[targetOffset];
+      separationMatrix[sourceOffset].push(
+        lengthProduct / (sourceCommunityExtent[sourceOffset] + targetCommunityIntent[targetOffset] + lengthProduct)
+      );
+    }
+  }
+  console.log(separationMatrix);
+
   var interpolator = d3.interpolateRgbBasis(d3.schemeDark2);
   var matrix = json['matrix'];
   var squareSize = 10;
