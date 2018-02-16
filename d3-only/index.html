@@ -20,23 +20,43 @@ body {
 <body>
 <div id="v"></div>
 <script type="text/javascript">
-d3.json('matrix_delight_v3.json').then(function(json) {
-  var bloc_display = {};
+d3.json('matrix5.json').then(function(json) {
+
+  var blocDisplay = {};
   for (var lineOffset in json['matrix']) {
     for (var columnOffset in json['matrix'][lineOffset]) {
       var currentBool = json['matrix'][lineOffset][columnOffset];
       var sourceCategory = json['sources'][lineOffset].community_category;
       var targetCategory = json['targets'][columnOffset].community_category;
       var key = (""+sourceCategory) + ',' + (""+targetCategory);
-      if (key in bloc_display) {
-        bloc_display[key] = bloc_display[key] || currentBool;
+      if (key in blocDisplay) {
+        blocDisplay[key].displayed = blocDisplay[key].displayed || currentBool;
       }
       else {
-        bloc_display[key] = currentBool;
+        blocDisplay[key] = {};
+        blocDisplay[key].displayed = currentBool;
+        blocDisplay[key].sources = {};
+        blocDisplay[key].targets = {};
+        blocDisplay[key].targetsCount = 0;
+        blocDisplay[key].sourcesCount = 0;
+      }
+      if (currentBool) {
+        var sourceKey = json['sources'][lineOffset].node;
+        var targetKey = json['targets'][columnOffset].node;
+        if (!(sourceKey in blocDisplay[key].sources)) {
+          blocDisplay[key].sources[sourceKey] = true;
+          blocDisplay[key].sourcesCount += 1;
+        }
+        if (!(targetKey in blocDisplay[key].targets)) {
+          blocDisplay[key].targets[targetKey] = true;
+          blocDisplay[key].targetsCount += 1;
+        }
       }
     }
   }
-  console.log(bloc_display);
+
+
+  console.log(blocDisplay);
 
   var sourcesExtent = [];
   var targetsIntent = [];
@@ -67,10 +87,10 @@ d3.json('matrix_delight_v3.json').then(function(json) {
     if (currentCommunity != oldCommunity) {
       if (oldCommunity != null)
         sourceCommunityExtent.push(communityExtentSum);
-      communityExtentSum = sourcesExtent[sourceOffset];
+      communityExtentSum = {'sum': sourcesExtent[sourceOffset], 'community': currentCommunity};
     }
     else
-      communityExtentSum += sourcesExtent[sourceOffset];
+      communityExtentSum.sum += sourcesExtent[sourceOffset];
     oldCommunity = currentCommunity;
   }
   sourceCommunityExtent.push(communityExtentSum);
@@ -85,16 +105,16 @@ d3.json('matrix_delight_v3.json').then(function(json) {
     if (currentCommunity != oldCommunity) {
       if (oldCommunity != null)
         targetCommunityIntent.push(communityIntentSum);
-      communityIntentSum = targetsIntent[targetOffset];
+      communityIntentSum = {'sum': targetsIntent[targetOffset], 'community':currentCommunity};
     }
     else
-      communityIntentSum += targetsIntent[targetOffset];
+      communityIntentSum.sum += targetsIntent[targetOffset];
     oldCommunity = currentCommunity;
   }
   targetCommunityIntent.push(communityIntentSum);
   console.log(targetCommunityIntent);
 
-
+/*
   var sourceCommunitySize = [];
   var targetCommunitySize = [];
   var oldD = null;
@@ -130,15 +150,17 @@ d3.json('matrix_delight_v3.json').then(function(json) {
   targetCommunitySize.push(targetCount);
   
   console.log(sourceCommunitySize, targetCommunitySize);
-
-  var separationMatrix = [];
-  for (var sourceOffset in sourceCommunitySize) {
-    separationMatrix.push([]);
-    for (var targetOffset in targetCommunitySize) {
-      var lengthProduct = sourceCommunitySize[sourceOffset]*targetCommunitySize[targetOffset];
-      separationMatrix[sourceOffset].push(
-        lengthProduct / (sourceCommunityExtent[sourceOffset] + targetCommunityIntent[targetOffset] + lengthProduct)
-      );
+*/
+  var separationMatrix = {};
+  for (var sourceOffset in sourceCommunityExtent) {
+    //separationMatrix.push([]);
+    for (var targetOffset in targetCommunityIntent) {
+      var blocKey = (""+sourceCommunityExtent[sourceOffset].community) + ',' + (""+targetCommunityIntent[targetOffset].community);
+      var lengthProduct = blocDisplay[blocKey].sourcesCount * blocDisplay[blocKey].targetsCount;
+      //separationMatrix[sourceOffset].push(
+      //  lengthProduct / (sourceCommunityExtent[sourceOffset].sum + targetCommunityIntent[targetOffset].sum + lengthProduct)
+      //);
+      separationMatrix[blocKey] = lengthProduct / (sourceCommunityExtent[sourceOffset].sum + targetCommunityIntent[targetOffset].sum + lengthProduct);
     }
   }
   console.log(separationMatrix);
@@ -176,8 +198,8 @@ d3.json('matrix_delight_v3.json').then(function(json) {
       var k = Array.prototype.indexOf.call(j[i].parentNode.parentNode.childNodes,j[i].parentNode);
       console.log(k);
       var key = (''+json.sources[k].community_category) + ',' + (''+json.targets[i].community_category);
-      console.log(key);
-      return bloc_display[key] ? (d ? 1 : 0.3) : 0.05;
+      //return blocDisplay[key].displayed ? (d ? 1 : 0.3) : 0.05;
+      return d ? 1 : 0.05 + 0.9*separationMatrix[key];
     });
   //.style("fill", function(d, i) { return  ;}); // d is matrix[i]
 
