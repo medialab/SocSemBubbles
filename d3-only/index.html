@@ -114,52 +114,11 @@ d3.json('matrix5.json').then(function(json) {
   targetCommunityIntent.push(communityIntentSum);
   console.log(targetCommunityIntent);
 
-/*
-  var sourceCommunitySize = [];
-  var targetCommunitySize = [];
-  var oldD = null;
-  var sourceCount = null;
-  for (var sourceOffset in json['sources']) {
-    var d = json['sources'][sourceOffset].community_category;
-    if (d != oldD) {
-      if (oldD != null)
-        sourceCommunitySize.push(sourceCount);
-      sourceCount = 1;
-    }
-    else
-      sourceCount += 1;
-    oldD = d;
-  }
-  // We never push the last community count within the for loop
-  sourceCommunitySize.push(sourceCount);
-
-  oldD = null;
-  var targetCount = null
-  for (var targetOffset in json['targets']) {
-    var d = json['targets'][targetOffset].community_category;
-    if (d != oldD) {
-      if (oldD != null)
-        targetCommunitySize.push(targetCount);
-      targetCount = 1;
-    }
-    else
-      targetCount += 1;
-    oldD = d;
-  }
-  // We never push the last community count within the for loop
-  targetCommunitySize.push(targetCount);
-  
-  console.log(sourceCommunitySize, targetCommunitySize);
-*/
   var separationMatrix = {};
   for (var sourceOffset in sourceCommunityExtent) {
-    //separationMatrix.push([]);
     for (var targetOffset in targetCommunityIntent) {
       var blocKey = (""+sourceCommunityExtent[sourceOffset].community) + ',' + (""+targetCommunityIntent[targetOffset].community);
       var lengthProduct = blocDisplay[blocKey].sourcesCount * blocDisplay[blocKey].targetsCount;
-      //separationMatrix[sourceOffset].push(
-      //  lengthProduct / (sourceCommunityExtent[sourceOffset].sum + targetCommunityIntent[targetOffset].sum + lengthProduct)
-      //);
       separationMatrix[blocKey] = lengthProduct / (sourceCommunityExtent[sourceOffset].sum + targetCommunityIntent[targetOffset].sum + lengthProduct);
     }
   }
@@ -198,10 +157,8 @@ d3.json('matrix5.json').then(function(json) {
       var k = Array.prototype.indexOf.call(j[i].parentNode.parentNode.childNodes,j[i].parentNode);
       console.log(k);
       var key = (''+json.sources[k].community_category) + ',' + (''+json.targets[i].community_category);
-      //return blocDisplay[key].displayed ? (d ? 1 : 0.3) : 0.05;
       return d ? 1 : 0.05 + 0.9*separationMatrix[key];
     });
-  //.style("fill", function(d, i) { return  ;}); // d is matrix[i]
 
   var sourceNames = g.selectAll(".sourceName")
     .data(json.sources).enter()
