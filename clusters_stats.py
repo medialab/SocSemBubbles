@@ -134,7 +134,7 @@ def get_nodes_distribution(source_to_target_node_links, source_core_communities,
     target_partition = get_partitions_from_communities(target_core_communities)
     for community, node_set in source_core_communities.items():
         for node in node_set:
-            node_targets = source_to_target_node_links[node]
+            node_targets = source_to_target_node_links.get(node, {})
             nodes_links[node] = {'total': len(node_targets), 'total_in_core':0, 'core_distribution':{}}
             for target_node in node_targets:
                 if target_node in target_partition:# It's in a core !
