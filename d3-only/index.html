@@ -20,6 +20,7 @@ body {
 <body>
 <div id="v"></div>
 <script type="text/javascript">
+//d3.json('matrix_delight_v4.json').then(function(json) {
 d3.json('matrix5.json').then(function(json) {
 
   var blocDisplay = {};
@@ -128,14 +129,48 @@ d3.json('matrix5.json').then(function(json) {
   var matrix = json['matrix'];
   var squareSize = 10;
   var squarePadding = squareSize*1/3;
-  var width = 800;
-  var height = 800;
-  var selection = d3.select("#v").append("svg:svg");
+  var translation = 150;
+  var width = translation + (json.targets.length+1)*(squareSize+squarePadding);
+  var height = translation + (json.sources.length+1)*(squareSize+squarePadding);
+
+  var selection = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  selection.setAttribute("width", width);
+  selection.setAttribute("height", height);
+  var svg_root = document.getElementById("v");
+  svg_root.appendChild(selection);
+
+  var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('transform', "translate(" + translation + "," + translation + ")");
+  selection.appendChild(g);
+  
+
+  // Matrix dots
+  for (var i = 0; i < matrix.length; ++i) {
+	var squareLine = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+	squareLine.setAttribute("transform", "translate(" + "0," + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ")");
+	squareLine.setAttribute("class", "linkLine");
+	squareLine.setAttribute("fill", interpolator(json.sources[i].community_category/json.total_source_communities));
+	for (var j = 0; j < matrix[i].length; ++j) {
+		var point = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+		point.setAttribute("class", "linkPoint");
+		point.setAttribute("height", squareSize);
+		point.setAttribute("width", squareSize);
+		point.setAttribute("x", j*(squarePadding+squareSize) + json.targets[j].community_category*squarePadding);
+		point.setAttribute("y", 0);
+		var key = (''+json.sources[j].community_category) + ',' + (''+json.targets[i].community_category);
+		point.setAttribute("opacity", blocDisplay[key] ? (matrix[i][j] ? 1 : 0.3) : 0.05);
+		//point.setAttribute("opacity"
+		squareLine.appendChild(point);
+	}
+	g.appendChild(squareLine);
+  }
+  
+/*  var selection = d3.select("#v").append("svg:svg");
   var g = selection
     .attr("width", width)
     .attr("height", height)
     .append("g")
-    .attr("transform", "translate(" + 150 + "," + 150 + ")");
+    .attr("transform", "translate(" + translation + "," + translation + ")");
 
   var squareLine = g.selectAll(".linkLine")
     .data(matrix).enter()
@@ -180,6 +215,7 @@ d3.json('matrix5.json').then(function(json) {
     .attr("x", function(d, i) { return (i+1/4)*(squarePadding+squareSize) + (d.community_category - 1)*squarePadding; })
     .style("font-size", squareSize*4/5)
     .attr("text-anchor", "end");
+*/
 });
 </script>
 </body>
