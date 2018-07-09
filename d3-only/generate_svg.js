@@ -1,9 +1,15 @@
-//d3.json('matrix_delight_v4.json').then(function(json) {
+// Trick borrowed from here:
+// https://css-tricks.com/snippets/javascript/htmlentities-for-javascript/
+function xmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+
 const fs = require('fs');
 
 json = JSON.parse(fs.readFileSync(process.argv[2]));
 svgFile = fs.createWriteStream(process.argv[3]);
 
+// Is there any link from source community to target community ?
   var blocDisplay = {};
   for (var lineOffset in json['matrix']) {
     for (var columnOffset in json['matrix'][lineOffset]) {
@@ -115,56 +121,28 @@ svgFile = fs.createWriteStream(process.argv[3]);
   var translation = 150;
   var width = translation + (json.targets.length+1)*(squareSize+squarePadding);
   var height = translation + (json.sources.length+1)*(squareSize+squarePadding);
+  var endline='\n';
 
 // Appending SVG root
-/*
-  var selection = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  selection.setAttribute("width", width);
-  selection.setAttribute("height", height);
-  var svg_root = document.getElementById("v");
-  svg_root.appendChild(selection);
-*/
-  svgFile.write('<svg width='+width+' height='+height+'>\n');
+
+  svgFile.write('<svg width="'+width+'" height="'+height+'">'+endline);
   
 
 // Appending master g element
-/*
-  var g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  g.setAttribute('transform', "translate(" + translation + "," + translation + ")");
-  selection.appendChild(g);
-*/
-  svgFile.write('<g transform="translate('+translation + ',' + translation + ')">\n');
+  svgFile.write('<g transform="translate('+translation + ',' + translation + ')">'+endline);
 
   // Matrix dots
   for (var i = 0; i < matrix.length; ++i) {
 	// Appending line dots g
-	/*
-	var squareLine = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-	squareLine.setAttribute("transform", "translate(" + "0," + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ")");
-	squareLine.setAttribute("class", "linkLine");
-	squareLine.setAttribute("fill", interpolator(json.sources[i].community_category/json.total_source_communities));
-	*/
 	var fillColor = 'rgb('
 	+ (json.sources[i].community_category/json.total_source_communities * 255)+','
 	+ (200*(json.sources[i].community_category%2))+','
 	+ ( (1 - json.sources[i].community_category/json.total_source_communities) * 255)+')';
-	svgFile.write('<g transform="translate(0,' + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ')" fill="'+fillColor+'">\n');
+	svgFile.write('<g transform="translate(0,' + (i*(squarePadding+squareSize) + json.sources[i].community_category*squarePadding) + ')" fill="'+fillColor+'">'+endline);
 	for (var j = 0; j < matrix[i].length; ++j) {
 		// Appending dots rect
-		/*
-		var point = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-		point.setAttribute("class", "linkPoint");
-		point.setAttribute("height", squareSize);
-		point.setAttribute("width", squareSize);
-		point.setAttribute("x", j*(squarePadding+squareSize) + json.targets[j].community_category*squarePadding);
-		point.setAttribute("y", 0);
-		*/
 		var key = (''+json.sources[i].community_category) + ',' + (''+json.targets[j].community_category);
-		/*
-		point.setAttribute("opacity", blocDisplay[key].displayed ? (matrix[i][j] ? 1 : 0.3) : 0.05);
-		//point.setAttribute("opacity"
-		squareLine.appendChild(point);
-		*/
+		
 		svgFile.write('<rect'
 		+' height="'+squareSize+'"'
 		+' width="'+squareSize+'"'
@@ -173,12 +151,32 @@ svgFile = fs.createWriteStream(process.argv[3]);
 		+' opacity="'+ (blocDisplay[key].displayed ? (matrix[i][j] ? 1 : 0.3) : 0.05) + '"'
 		+'></rect>');
 	}
-	svgFile.write('</g>\n')
-	/*
-	g.appendChild(squareLine);
-	*/
-  
+	svgFile.write('</g>'+endline);
   }
-  svgFile.write('</g>\n');
-  svgFile.write('</svg>\n');
+  // Appending source names
+  for (var i= 0; i < json.sources.length; ++i) {
+	var d = json.sources[i];
+	svgFile.write('<text transform="rotate(0,0,' + ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding) + ')"'
+	+ ' y="' + ((i+1/2)*(squarePadding+squareSize) + d.community_category*squarePadding) + '"'
+	+ ' x="' + (-squarePadding) + '"'
+	+ ' font-size="' + (squareSize*4/5) + '"'
+	+ ' text-anchor="end"'
+	+ '>');
+	svgFile.write(xmlEntities(d.node));
+	svgFile.write('</text>');
+  }
+
+  // Appending target names
+  for (var i= 0; i < json.targets.length; ++i) {
+	var d = json.targets[i];
+	svgFile.write('<text transform="rotate(90,' + ((i+1/4)*(squarePadding+squareSize) + d.community_category*squarePadding) + ',0)"'
+	+ ' x="' + ((i+1/4)*(squarePadding+squareSize) + (d.community_category - 1)*squarePadding) + '"'
+	+ ' font-size="' + (squareSize*4/5) + '"'
+	+ ' text-anchor="end"'
+	+ '>');
+	svgFile.write(xmlEntities(d.node));
+	svgFile.write('</text>');
+  }
+  svgFile.write('</g>'+endline);
+  svgFile.write('</svg>'+endline);
 svgFile.end();
